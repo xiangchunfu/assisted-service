@@ -344,6 +344,7 @@ func (feature *MtvFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *mod
 	return activeLevelNotActive
 }
 
+<<<<<<< HEAD
 // NodeFeatureDiscoveryFeature describes the support for the node feature discovery operator.
 type NodeFeatureDiscoveryFeature struct{}
 
@@ -586,6 +587,55 @@ func (f *OpenShiftAIFeature) getIncompatibleFeatures(string) *[]models.FeatureSu
 
 func (f *OpenShiftAIFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *models.InfraEnv, clusterUpdateParams *models.V2ClusterUpdateParams, _ *models.InfraEnvUpdateParams) featureActiveLevel {
 	if isOperatorActivated("openshift-ai", cluster, clusterUpdateParams) {
+// OSCFeature
+type OSCFeature struct{}
+
+func (feature *OSCFeature) New() SupportLevelFeature {
+	return &OSCFeature{}
+}
+
+func (feature *OSCFeature) getId() models.FeatureSupportLevelID {
+	return models.FeatureSupportLevelIDOSC
+}
+
+func (feature *OSCFeature) GetName() string {
+	return "OpenShift Sandboxed Containers"
+}
+
+func (feature *OSCFeature) getSupportLevel(filters SupportLevelFilters) models.SupportLevel {
+	if !isFeatureCompatibleWithArchitecture(feature, filters.OpenshiftVersion, swag.StringValue(filters.CPUArchitecture)) {
+		return models.SupportLevelUnavailable
+	}
+
+	if filters.PlatformType != nil && (*filters.PlatformType == models.PlatformTypeVsphere || *filters.PlatformType == models.PlatformTypeNutanix || *filters.PlatformType == models.PlatformTypeNone) {
+		return models.SupportLevelUnavailable
+	}
+
+	if isNotSupported, err := common.BaseVersionLessThan("4.17", filters.OpenshiftVersion); isNotSupported || err != nil {
+		return models.SupportLevelUnavailable
+	}
+
+	return models.SupportLevelSupported
+}
+
+func (feature *OSCFeature) getIncompatibleArchitectures(_ *string) *[]models.ArchitectureSupportLevelID {
+	incompatibleArchitecture := []models.ArchitectureSupportLevelID{
+		models.ArchitectureSupportLevelIDARM64ARCHITECTURE,
+		models.ArchitectureSupportLevelIDS390XARCHITECTURE,
+		models.ArchitectureSupportLevelIDPPC64LEARCHITECTURE,
+	}
+	return &incompatibleArchitecture
+}
+
+func (feature *OSCFeature) getIncompatibleFeatures(string) *[]models.FeatureSupportLevelID {
+	return &[]models.FeatureSupportLevelID{
+		models.FeatureSupportLevelIDNUTANIXINTEGRATION,
+		models.FeatureSupportLevelIDVSPHEREINTEGRATION,
+	}
+}
+
+func (feature *OSCFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *models.InfraEnv, clusterUpdateParams *models.V2ClusterUpdateParams, _ *models.InfraEnvUpdateParams) featureActiveLevel {
+	if isOperatorActivated("OSC", cluster, clusterUpdateParams) && isOperatorActivated("cnv", cluster, clusterUpdateParams) {
 		return activeLevelActive
 	}
 	return activeLevelNotActive

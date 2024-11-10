@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/assisted-service/internal/operators/pipelines"
 	"github.com/openshift/assisted-service/internal/operators/serverless"
 	"github.com/openshift/assisted-service/internal/operators/servicemesh"
+	"github.com/openshift/assisted-service/internal/operators/osc"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/assisted-service/pkg/s3wrapper"
 	"github.com/sirupsen/logrus"
@@ -54,6 +55,7 @@ func NewManager(log logrus.FieldLogger, manifestAPI manifestsapi.ManifestsAPI, o
 		servicemesh.NewServiceMeshOperator(log),
 		serverless.NewServerLessOperator(log),
 		openshiftai.NewOpenShiftAIOperator(log),
+		osc.NewOscOperator(log),
 	)
 }
 
