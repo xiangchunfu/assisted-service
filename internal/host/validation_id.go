@@ -35,6 +35,7 @@ const (
 	AreLvmRequirementsSatisfied                    = validationID(models.HostValidationIDLvmRequirementsSatisfied)
 	AreMceRequirementsSatisfied                    = validationID(models.HostValidationIDMceRequirementsSatisfied)
 	AreMtvRequirementsSatisfied                    = validationID(models.HostValidationIDMtvRequirementsSatisfied)
+	AreOscRequirementsSatisfied                    = validationID(models.HostValidationIDOscRequirementsSatisfied)
 	SufficientOrUnknownInstallationDiskSpeed       = validationID(models.HostValidationIDSufficientInstallationDiskSpeed)
 	HasSufficientNetworkLatencyRequirementForRole  = validationID(models.HostValidationIDSufficientNetworkLatencyRequirementForRole)
 	HasSufficientPacketLossRequirementForRole      = validationID(models.HostValidationIDSufficientPacketLossRequirementForRole)
@@ -52,6 +53,13 @@ const (
 	NoSkipInstallationDisk                         = validationID(models.HostValidationIDNoSkipInstallationDisk)
 	NoSkipMissingDisk                              = validationID(models.HostValidationIDNoSkipMissingDisk)
 	NoIPCollisionsInNetwork                        = validationID(models.HostValidationIDNoIPCollisionsInNetwork)
+	NoIscsiNicBelongsToMachineCidr                 = validationID(models.HostValidationIDNoIscsiNicBelongsToMachineCidr)
+	AreNodeFeatureDiscoveryRequirementsSatisfied   = validationID(models.HostValidationIDNodeFeatureDiscoveryRequirementsSatisfied)
+	AreNvidiaGPURequirementsSatisfied              = validationID(models.HostValidationIDNvidiaGpuRequirementsSatisfied)
+	ArePipelinesRequirementsSatisfied              = validationID(models.HostValidationIDPipelinesRequirementsSatisfied)
+	AreServiceMeshRequirementsSatisfied            = validationID(models.HostValidationIDServicemeshRequirementsSatisfied)
+	AreServerLessRequirementsSatisfied             = validationID(models.HostValidationIDServerlessRequirementsSatisfied)
+	AreOpenShiftAIRequirementsSatisfied            = validationID(models.HostValidationIDOpenshiftAiRequirementsSatisfied)
 )
 
 func (v validationID) category() (string, error) {
@@ -75,7 +83,8 @@ func (v validationID) category() (string, error) {
 		IsDNSWildcardNotConfigured,
 		NonOverlappingSubnets,
 		IsReleaseDomainNameResolvedCorrectly,
-		NoIPCollisionsInNetwork:
+		NoIPCollisionsInNetwork,
+		NoIscsiNicBelongsToMachineCidr:
 		return "network", nil
 	case HasInventory,
 		HasMinCPUCores,
@@ -98,7 +107,14 @@ func (v validationID) category() (string, error) {
 		AreCnvRequirementsSatisfied,
 		AreLvmRequirementsSatisfied,
 		AreMceRequirementsSatisfied,
-		AreMtvRequirementsSatisfied:
+		AreMtvRequirementsSatisfied,
+		AreNodeFeatureDiscoveryRequirementsSatisfied,
+		AreNvidiaGPURequirementsSatisfied,
+		ArePipelinesRequirementsSatisfied,
+		AreServiceMeshRequirementsSatisfied,
+		AreServerLessRequirementsSatisfied,
+		AreOpenShiftAIRequirementsSatisfied,
+		AreOscRequirementsSatisfied:
 		return "operators", nil
 	}
 	return "", common.NewApiError(http.StatusInternalServerError, errors.Errorf("Unexpected validation id %s", string(v)))

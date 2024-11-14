@@ -125,8 +125,15 @@ func NewClusterStateMachine(th TransitionHandler) stateswitch.StateMachine {
 		If(IsLvmRequirementsSatisfied),
 		If(IsMceRequirementsSatisfied),
 		If(IsMtvRequirementsSatisfied),
+		If(IsOscRequirementsSatisfied),
 		If(isNetworkTypeValid),
 		If(NetworksSameAddressFamilies),
+		If(IsNodeFeatureDiscoveryRequirementsSatisfied),
+		If(IsNvidiaGPURequirementsSatisfied),
+		If(IsPipelinesRequirementsSatisfied),
+		If(IsServiceMeshRequirementsSatisfied),
+		If(IsServerLessRequirementsSatisfied),
+		If(IsOpenShiftAIRequirementsSatisfied),
 	)
 
 	// Refresh cluster status conditions - Non DHCP

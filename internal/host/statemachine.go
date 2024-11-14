@@ -939,6 +939,7 @@ func NewHostStateMachine(sm stateswitch.StateMachine, th TransitionHandler) stat
 		If(AreLvmRequirementsSatisfied),
 		If(AreMceRequirementsSatisfied),
 		If(AreMtvRequirementsSatisfied),
+		If(AreOscRequirementsSatisfied),
 		If(HasSufficientNetworkLatencyRequirementForRole),
 		If(HasSufficientPacketLossRequirementForRole),
 		If(HasDefaultRoute),
@@ -954,6 +955,13 @@ func NewHostStateMachine(sm stateswitch.StateMachine, th TransitionHandler) stat
 		If(NoSkipInstallationDisk),
 		If(NoSkipMissingDisk),
 		If(NoIPCollisionsInNetwork),
+		If(NoIscsiNicBelongsToMachineCidr),
+		If(AreNodeFeatureDiscoveryRequirementsSatisfied),
+		If(AreNvidiaGPURequirementsSatisfied),
+		If(ArePipelinesRequirementsSatisfied),
+		If(AreServiceMeshRequirementsSatisfied),
+		If(AreServerLessRequirementsSatisfied),
+		If(AreOpenShiftAIRequirementsSatisfied),
 		/*
 					 * MGMT-15213: The release domain is not resolved correctly when there is a mirror or proxy.  In this case
 					 * validation might fail, but the installation may succeed.

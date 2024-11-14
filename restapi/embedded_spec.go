@@ -6900,8 +6900,15 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+	"osc-requirements-satisfied",
         "network-type-valid",
-        "platform-requirements-satisfied"
+        "platform-requirements-satisfied",
+        "node-feature-discovery-requirements-satisfied",
+        "nvidia-gpu-requirements-satisfied",
+        "pipelines-requirements-satisfied",
+        "servicemesh-requirements-satisfied",
+        "serverless-requirements-satisfied",
+        "openshift-ai-requirements-satisfied"
       ]
     },
     "cluster_default_config": {
@@ -7723,6 +7730,7 @@ func init() {
         "CNV",
         "MCE",
         "MTV",
+	"OSC",
         "NUTANIX_INTEGRATION",
         "BAREMETAL_PLATFORM",
         "NONE_PLATFORM",
@@ -7738,7 +7746,13 @@ func init() {
         "SKIP_MCO_REBOOT",
         "EXTERNAL_PLATFORM",
         "OVN_NETWORK_TYPE",
-        "SDN_NETWORK_TYPE"
+        "SDN_NETWORK_TYPE",
+        "NODE_FEATURE_DISCOVERY",
+        "NVIDIA_GPU",
+        "PIPELINES",
+        "SERVICEMESH",
+        "SERVERLESS",
+        "OPENSHIFT_AI"
       ]
     },
     "finalizing-stage": {
@@ -8337,6 +8351,7 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+	"osc-requirements-satisfied",
         "sufficient-installation-disk-speed",
         "cnv-requirements-satisfied",
         "sufficient-network-latency-requirement-for-role",
@@ -8354,7 +8369,14 @@ func init() {
         "compatible-agent",
         "no-skip-installation-disk",
         "no-skip-missing-disk",
-        "no-ip-collisions-in-network"
+        "no-ip-collisions-in-network",
+        "no-iscsi-nic-belongs-to-machine-cidr",
+        "node-feature-discovery-requirements-satisfied",
+        "nvidia-gpu-requirements-satisfied",
+        "pipelines-requirements-satisfied",
+        "servicemesh-requirements-satisfied",
+        "serverless-requirements-satisfied",
+        "openshift-ai-requirements-satisfied"
       ]
     },
     "host_network": {
@@ -17728,8 +17750,15 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+	"osc-requirements-satisfied",
         "network-type-valid",
-        "platform-requirements-satisfied"
+        "platform-requirements-satisfied",
+        "node-feature-discovery-requirements-satisfied",
+        "nvidia-gpu-requirements-satisfied",
+        "pipelines-requirements-satisfied",
+        "servicemesh-requirements-satisfied",
+        "serverless-requirements-satisfied",
+        "openshift-ai-requirements-satisfied"
       ]
     },
     "cluster_default_config": {
@@ -18518,6 +18547,7 @@ func init() {
         "CNV",
         "MCE",
         "MTV",
+	"OSC",
         "NUTANIX_INTEGRATION",
         "BAREMETAL_PLATFORM",
         "NONE_PLATFORM",
@@ -18533,7 +18563,13 @@ func init() {
         "SKIP_MCO_REBOOT",
         "EXTERNAL_PLATFORM",
         "OVN_NETWORK_TYPE",
-        "SDN_NETWORK_TYPE"
+        "SDN_NETWORK_TYPE",
+        "NODE_FEATURE_DISCOVERY",
+        "NVIDIA_GPU",
+        "PIPELINES",
+        "SERVICEMESH",
+        "SERVERLESS",
+        "OPENSHIFT_AI"
       ]
     },
     "finalizing-stage": {
@@ -19149,7 +19185,14 @@ func init() {
         "compatible-agent",
         "no-skip-installation-disk",
         "no-skip-missing-disk",
-        "no-ip-collisions-in-network"
+        "no-ip-collisions-in-network",
+        "no-iscsi-nic-belongs-to-machine-cidr",
+        "node-feature-discovery-requirements-satisfied",
+        "nvidia-gpu-requirements-satisfied",
+        "pipelines-requirements-satisfied",
+        "servicemesh-requirements-satisfied",
+        "serverless-requirements-satisfied",
+        "openshift-ai-requirements-satisfied"
       ]
     },
     "host_network": {

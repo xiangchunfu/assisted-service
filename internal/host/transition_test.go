@@ -6539,6 +6539,7 @@ var allValidationIDs = []validationID{
 	AreLvmRequirementsSatisfied,
 	AreMceRequirementsSatisfied,
 	AreMtvRequirementsSatisfied,
+	AreOscRequirementsSatisfied,
 	SufficientOrUnknownInstallationDiskSpeed,
 	HasSufficientNetworkLatencyRequirementForRole,
 	HasSufficientPacketLossRequirementForRole,
@@ -6556,6 +6557,13 @@ var allValidationIDs = []validationID{
 	NoSkipMissingDisk,
 	NoIPCollisionsInNetwork,
 	IsReleaseDomainNameResolvedCorrectly,
+	NoIscsiNicBelongsToMachineCidr,
+	AreNodeFeatureDiscoveryRequirementsSatisfied,
+	AreNvidiaGPURequirementsSatisfied,
+	ArePipelinesRequirementsSatisfied,
+	AreServiceMeshRequirementsSatisfied,
+	AreServerLessRequirementsSatisfied,
+	AreOpenShiftAIRequirementsSatisfied,
 }
 
 var allConditions = []conditionId{
@@ -6704,6 +6712,19 @@ var _ = Describe("State machine test - refresh transition", func() {
 			Expect(string(testState.State())).To(Equal(models.HostStatusInsufficient))
 
 			refreshHostArgs.conditions[string(NoIPCollisionsInNetwork)] = true
+
+			Expect(stateMachine.Run(TransitionTypeRefresh, testState, &refreshHostArgs)).To(Succeed())
+			Expect(string(testState.State())).To(Equal(models.HostStatusKnown))
+		})
+
+		It("Moves from known to insufficient when  validation fails", func() {
+
+			refreshHostArgs.conditions[string(NoIscsiNicBelongsToMachineCidr)] = false
+
+			Expect(stateMachine.Run(TransitionTypeRefresh, testState, &refreshHostArgs)).To(Succeed())
+			Expect(string(testState.State())).To(Equal(models.HostStatusInsufficient))
+
+			refreshHostArgs.conditions[string(NoIscsiNicBelongsToMachineCidr)] = true
 
 			Expect(stateMachine.Run(TransitionTypeRefresh, testState, &refreshHostArgs)).To(Succeed())
 			Expect(string(testState.State())).To(Equal(models.HostStatusKnown))
