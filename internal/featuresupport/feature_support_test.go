@@ -269,19 +269,19 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 			When("GetFeatureSupportList 4.12 with Platform", func() {
 				It(string(*filters.PlatformType)+" "+swag.StringValue(filters.ExternalPlatformName), func() {
 					list := GetFeatureSupportList("dummy", nil, filters.PlatformType, filters.ExternalPlatformName)
-					Expect(len(list)).To(Equal(26))
+					Expect(len(list)).To(Equal(27))
 				})
 			})
 		}
 
 		It("GetFeatureSupportList 4.12", func() {
 			list := GetFeatureSupportList("4.12", nil, nil, nil)
-			Expect(len(list)).To(Equal(31))
+			Expect(len(list)).To(Equal(32))
 		})
 
 		It("GetFeatureSupportList 4.13", func() {
 			list := GetFeatureSupportList("4.13", nil, nil, nil)
-			Expect(len(list)).To(Equal(31))
+			Expect(len(list)).To(Equal(32))
 		})
 
 		It("GetCpuArchitectureSupportList 4.12", func() {
