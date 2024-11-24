@@ -36,6 +36,7 @@ import (
 	"github.com/openshift/assisted-service/internal/operators/lvm"
 	"github.com/openshift/assisted-service/internal/operators/mce"
 	"github.com/openshift/assisted-service/internal/operators/mtv"
+	"github.com/openshift/assisted-service/internal/operators/osc"
 	"github.com/openshift/assisted-service/internal/operators/nodefeaturediscovery"
 	"github.com/openshift/assisted-service/internal/operators/nvidiagpu"
 	"github.com/openshift/assisted-service/internal/operators/odf"
@@ -1857,6 +1858,26 @@ var _ = Describe("cluster install", func() {
 				},
 			})
 			Expect(err).To(BeAssignableToTypeOf(installer.NewV2RegisterHostConflict()))
+		})
+
+		It("triggering cluster install if not in appropriate state should leave last preparation status intact", func() {
+			clusterInstallationReply, err := userBMClient.Installer.V2InstallCluster(ctx, &installer.V2InstallClusterParams{ClusterID: clusterID})
+			Expect(err).NotTo(HaveOccurred())
+			c := clusterInstallationReply.GetPayload()
+			Expect(*c.Status).Should(Equal(models.ClusterStatusPreparingForInstallation))
+			generateEssentialPrepareForInstallationSteps(ctx, c.Hosts...)
+			waitForLastInstallationCompletionStatus(clusterID, models.LastInstallationPreparationStatusSuccess)
+			waitForClusterState(ctx, clusterID, models.ClusterStatusInstalling, defaultWaitForClusterStateTimeout, IgnoreStateInfo)
+
+			_, err = userBMClient.Installer.V2InstallCluster(ctx, &installer.V2InstallClusterParams{ClusterID: clusterID})
+			Expect(err).To(HaveOccurred())
+
+			// MGMT-19217: The LastInstallationPreparation fields should not have been changed by handling of the additional (rejected) install request.
+			getClusterReply, err := userBMClient.Installer.V2GetCluster(ctx, &installer.V2GetClusterParams{ClusterID: clusterID})
+			Expect(err).NotTo(HaveOccurred())
+			c = getClusterReply.GetPayload()
+			Expect(c.LastInstallationPreparation.Status).To(Equal(models.LastInstallationPreparationStatusSuccess))
+			Expect(c.LastInstallationPreparation.Reason).To(Equal(constants.InstallationPreparationReasonSuccess))
 		})
 
 		It("fail installation if there is only a single worker that manages to install", func() {
@@ -3719,6 +3740,10 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 			CPUCores: mtv.MasterCPU,
 			RAMMib:   conversions.GibToMib(mtv.MasterMemory),
 		}
+                masterOSCRequirements = models.ClusterHostRequirementsDetails{
+                        CPUCores: osc.MasterCPU,
+                        RAMMib:   conversions.GibToMib(osc.MasterMemory),
+                }
 		workerOpenShiftAIRequirements = models.ClusterHostRequirementsDetails{
 			CPUCores: 8,
 			RAMMib:   conversions.GibToMib(32),
@@ -3750,7 +3775,7 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 			},
 		}
 		Expect(*requirements.Ocp).To(BeEquivalentTo(expectedOcpRequirements))
-		Expect(requirements.Operators).To(HaveLen(12))
+		Expect(requirements.Operators).To(HaveLen(13))
 		for _, op := range requirements.Operators {
 			switch op.OperatorName {
 			case lso.Operator.Name:
@@ -3770,6 +3795,9 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 					fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, masterMTVRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Master.Quantitative.CPUCores, op.Requirements.Master.Quantitative.RAMMib, masterMTVRequirements.CPUCores, masterMTVRequirements.RAMMib))
 				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(workerMTVRequirements),
 					fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, workerMTVRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Worker.Quantitative.CPUCores, op.Requirements.Worker.Quantitative.RAMMib, workerMTVRequirements.CPUCores, workerMTVRequirements.RAMMib))
+                        case osc.Operator.Name:
+                                Expect(*op.Requirements.Master.Quantitative).To(BeEquivalentTo(masterOSCRequirements),
+                                        fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, masterOSCRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Master.Quantitative.CPUCores, op.Requirements.Master.Quantitative.RAMMib, masterOSCRequirements.CPUCores, masterOSCRequirements.RAMMib))
 			case nodefeaturediscovery.Operator.Name:
 				continue
 			case nvidiagpu.Operator.Name:
@@ -3824,7 +3852,7 @@ var _ = Describe("Preflight Cluster Requirements for lvms", func() {
 			switch op.OperatorName {
 			case lvm.Operator.Name:
 				Expect(*op.Requirements.Master.Quantitative).To(BeEquivalentTo(masterLVMRequirementsBefore4_13))
-				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(models.ClusterHostRequirementsDetails{}))
+				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(masterLVMRequirementsBefore4_13))
 			}
 		}
 		_, err = userBMClient.Installer.V2DeregisterCluster(ctx, &installer.V2DeregisterClusterParams{ClusterID: clusterID})
@@ -3852,7 +3880,7 @@ var _ = Describe("Preflight Cluster Requirements for lvms", func() {
 			switch op.OperatorName {
 			case lvm.Operator.Name:
 				Expect(*op.Requirements.Master.Quantitative).To(BeEquivalentTo(masterLVMRequirements))
-				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(models.ClusterHostRequirementsDetails{}))
+				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(masterLVMRequirements))
 			}
 		}
 		_, err = userBMClient.Installer.V2DeregisterCluster(ctx, &installer.V2DeregisterClusterParams{ClusterID: clusterID})
@@ -5149,4 +5177,47 @@ var _ = Describe("Verify install-config manifest", func() {
 		Entry("Operation: V2GetClusterInstallConfig, Platfrom type: none", "V2GetClusterInstallConfig", getInstallConfigFromFile, models.PlatformTypeNone, false),
 		Entry("Operation: V2GetClusterInstallConfig, Override config: true", "V2GetClusterInstallConfig", getInstallConfigFromFile, models.PlatformTypeBaremetal, true),
 	)
+})
+
+var _ = Describe("Verify role assignment for stretched control plane cluster", func() {
+	var ctx = context.TODO()
+
+	It("with 4 masters, 1 worker", func() {
+		reply, err := userBMClient.Installer.V2RegisterCluster(ctx, &installer.V2RegisterClusterParams{
+			Context: ctx,
+			NewClusterParams: &models.ClusterCreateParams{
+				Name:              swag.String("test-cluster"),
+				OpenshiftVersion:  swag.String(common.MinimumVersionForStretchedControlPlanesCluster),
+				PullSecret:        swag.String(pullSecret),
+				ControlPlaneCount: swag.Int64(4),
+			},
+		})
+
+		Expect(err).To(BeNil())
+		Expect(reply).To(BeAssignableToTypeOf(installer.NewV2RegisterClusterCreated()))
+
+		cluster := reply.GetPayload()
+		Expect(cluster).ToNot(BeNil())
+
+		infraEnv := registerInfraEnv(cluster.ID, models.ImageTypeMinimalIso)
+		Expect(infraEnv).ToNot(BeNil())
+
+		ips := hostutil.GenerateIPv4Addresses(5, defaultCIDRv4)
+		for k := 0; k < 5; k++ {
+			registerNodeWithInventory(ctx, *infraEnv.ID, fmt.Sprintf("host-%d", k), ips[0], getDefaultInventory(defaultCIDRv4))
+		}
+
+		Eventually(func() bool {
+			reply, err := userBMClient.Installer.V2GetCluster(ctx, &installer.V2GetClusterParams{ClusterID: *cluster.ID})
+			if err != nil {
+				return false
+			}
+
+			c := reply.Payload
+			masters, workers, autoAssign := common.GetHostsByEachRole(c, true)
+
+			return len(masters) == 4 && len(workers) == 1 && len(autoAssign) == 0
+
+		}, "60s", "2s").Should(BeTrue())
+	})
 })

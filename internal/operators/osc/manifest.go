@@ -7,33 +7,28 @@ import (
 
 func Manifests() (map[string][]byte, []byte, error) {
 
-	oscNamespace, err := getNamespace(Namespace)
+	oscNamespaceManifest, err := getNamespace(Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	oscOperatorGroup, err := getOperatorGroup(Namespace)
+	oscOperatorGroupManifest, err := getOperatorGroup(Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	oscSubscription, err := getSubscription(Namespace, Subscription, Source, SourceName)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	oscConfigMap, err := getConfigMap(Namespace, LayeredImageDeployment)
+	oscSubscriptionManifest, err := getSubscription(Namespace, SubscriptionName, Source, SourceName)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	openshiftManifests := make(map[string][]byte)
 
-	openshiftManifests["50_openshift-osc_ns.yaml"] = oscNamespace
-	openshiftManifests["50_openshift-osc_operator_group.yaml"] = oscOperatorGroup
-	openshiftManifests["50_openshift-osc_subscription.yaml"] = oscSubscription
+	openshiftManifests["50_openshift-osc_ns.yaml"] = oscNamespaceManifest
+	openshiftManifests["50_openshift-osc_operator_group.yaml"] = oscOperatorGroupManifest
+	openshiftManifests["50_openshift-osc_subscription.yaml"] = oscSubscriptionManifest
 
-	return openshiftManifests, oscConfigMap, nil
+	return openshiftManifests, nil, err
 }
 
 func executeTemplate(data map[string]string, contentName, content string) ([]byte, error) {
@@ -56,62 +51,31 @@ func getSubscription(namespace, subscription, source, sourceName string) ([]byte
 		"OPERATOR_SOURCE":            source,
 		"OPERATOR_SOURCE_NAME":       sourceName,
 	}
-	return executeTemplate(data, "oscSubscription", oscSubscription)
+	return executeTemplate(data, "oscSubscriptionManifest", oscSubscriptionManifest)
 }
 
 func getNamespace(namespace string) ([]byte, error) {
 	data := map[string]string{
 		"OPERATOR_NAMESPACE": namespace,
 	}
-	return executeTemplate(data, "oscNamespace", oscNamespace)
+	return executeTemplate(data, "oscNamespaceManifest", oscNamespaceManifest)
 }
 
 func getOperatorGroup(namespace string) ([]byte, error) {
 	data := map[string]string{
 		"OPERATOR_NAMESPACE": namespace,
 	}
-	return executeTemplate(data, "oscGroup", oscGroup)
+	return executeTemplate(data, "oscOperatorGroupManifest", oscOperatorGroupManifest)
 }
 
-func getConfigMap(namespace string, layeredImageDeployment string) ([]byte, error) {
-	data := map[string]string{
-		"OPERATOR_NAMESPACE":                   namespace,
-		"OPERATOR_IS_LAYERED_IMAGE_DEPLOYMENT": layeredImageDeployment,
-	}
-
-	if configMap, err := executeTemplate(data, "oscConfigMap", oscConfigMap); err != nil {
-		return nil, err
-	} else {
-		if layeredImageDeployment == "true" {
-			LayeredImageDeploymentConfigMap, err := getLayeredImageDeployConfigMap(namespace)
-			if err != nil {
-				return nil, err
-			}
-			configMap = append(configMap, []byte("\n---\n")...)
-			configMap = append(configMap, LayeredImageDeploymentConfigMap...)
-
-		}
-		return configMap, nil
-	}
-}
-
-func getLayeredImageDeployConfigMap(namespace string) ([]byte, error) {
-	data := map[string]string{
-		"OPERATOR_NAMESPACE":    namespace,
-		"OPERATOR_KERNEL_ARGS":  KernelArgs,
-		"OPERATOR_OS_IMAGE_URL": LayeredImageUrl,
-	}
-	return executeTemplate(data, "oscLayeredImageDeployConfigMap", oscLayeredImageDeployConfigMap)
-}
-
-const oscNamespace = `
+const oscNamespaceManifest = `
 apiVersion: v1
 kind: Namespace
 metadata:
   name: {{.OPERATOR_NAMESPACE}}
 `
 
-const oscGroup = `
+const oscOperatorGroupManifest = `
 apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
@@ -122,7 +86,7 @@ spec:
     - {{ .OPERATOR_NAMESPACE }}
 `
 
-const oscSubscription = `
+const oscSubscriptionManifest = `
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
@@ -134,25 +98,4 @@ spec:
   sourceNamespace: openshift-marketplace
   name: {{.OPERATOR_SOURCE_NAME}}
   installPlanApproval: Automatic
-`
-const oscConfigMap = `
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: osc-feature-gates
-  namespace: {{.OPERATOR_NAMESPACE}}
-data:
-  # layeredImageDeployment allows deploying Kata using RHCOS layered image
-  # This feature gate needs a ConfigMap named layered-image-deploy-cm
-  layeredImageDeployment: {{.OPERATOR_IS_LAYERED_IMAGE_DEPLOYMENT}}
-`
-const oscLayeredImageDeployConfigMap = `
-apiVersion: v1
-data:
-  osImageURL: {{.OPERATOR_OS_IMAGE_URL}}
-  kernelArguments: {{.OPERATOR_KERNEL_ARGS}}
-kind: ConfigMap
-metadata:
-  name: layered-image-deploy-cm
-  namespace: {{.OPERATOR_NAMESPACE}}
 `

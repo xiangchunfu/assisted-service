@@ -23,7 +23,7 @@ var Operator = models.MonitoredOperator{
 	Name:             Name,
 	Namespace:        Namespace,
 	OperatorType:     models.OperatorTypeOlm,
-	SubscriptionName: Subscription,
+	SubscriptionName: SubscriptionName,
 	TimeoutSeconds:   60 * 60,
 }
 
@@ -49,7 +49,7 @@ func (o *operator) GetFullName() string {
 }
 
 func (o *operator) GetDependencies(cluster *common.Cluster) ([]string, error) {
-	return []string{Operator.Name}, nil
+	return make([]string, 0), nil
 }
 
 // GetClusterValidationID returns cluster validation ID for the Operator

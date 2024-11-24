@@ -8,7 +8,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/openshift/assisted-service/internal/common"
 	"github.com/openshift/assisted-service/internal/operators/api"
-	"github.com/openshift/assisted-service/internal/operators/cnv"
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/assisted-service/pkg/conversions"
 	"github.com/sirupsen/logrus"
@@ -72,11 +71,6 @@ var _ = Describe("OSC Operator", func() {
 			Entry("min requirements", models.HostRoleMaster, newRequirements(minCpu, minRamMib)),
 		)
 
-		It("should return the dependencies", func() {
-			preflightRequirements, err := operator.GetPreflightRequirements(context.TODO(), &cluster)
-			Expect(err).To(BeNil())
-			Expect(preflightRequirements.Dependencies).To(Equal([]string{cnv.Operator.Name}))
-		})
 	})
 
 	Context("Validate host", func() {
