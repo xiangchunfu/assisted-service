@@ -20,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-version"
 	"github.com/kennygrant/sanitize"
+	configv1 "github.com/openshift/api/config/v1"
 	clusterPkg "github.com/openshift/assisted-service/internal/cluster"
 	"github.com/openshift/assisted-service/internal/cluster/validations"
 	"github.com/openshift/assisted-service/internal/common"
@@ -37,7 +38,6 @@ import (
 	"github.com/openshift/assisted-service/internal/ignition"
 	"github.com/openshift/assisted-service/internal/imageservice"
 	"github.com/openshift/assisted-service/internal/infraenv"
-	installcfgdata "github.com/openshift/assisted-service/internal/installcfg"
 	installcfg "github.com/openshift/assisted-service/internal/installcfg/builder"
 	"github.com/openshift/assisted-service/internal/isoeditor"
 	"github.com/openshift/assisted-service/internal/manifests"
@@ -334,7 +334,7 @@ func (b *bareMetalInventory) setDefaultRegisterClusterParams(ctx context.Context
 		params.NewClusterParams.SchedulableMasters = swag.Bool(false)
 	}
 
-	params.NewClusterParams.HighAvailabilityMode, params.NewClusterParams.ControlPlaneCount = common.GetDefaultHighAvailabilityAndMasterCountParams(
+	params.NewClusterParams.HighAvailabilityMode, params.NewClusterParams.ControlPlaneCount = getDefaultHighAvailabilityAndMasterCountParams(
 		params.NewClusterParams.HighAvailabilityMode, params.NewClusterParams.ControlPlaneCount,
 	)
 
@@ -645,12 +645,12 @@ func (b *bareMetalInventory) RegisterClusterInternal(ctx context.Context, kubeKe
 			IgnitionEndpoint:             params.NewClusterParams.IgnitionEndpoint,
 			Tags:                         swag.StringValue(params.NewClusterParams.Tags),
 			OrgSoftTimeoutsEnabled:       orgSoftTimeoutsEnabled,
+			ControlPlaneCount:            swag.Int64Value(params.NewClusterParams.ControlPlaneCount),
 		},
 		KubeKeyName:                 kubeKey.Name,
 		KubeKeyNamespace:            kubeKey.Namespace,
 		TriggerMonitorTimestamp:     time.Now(),
 		MachineNetworkCidrUpdatedAt: time.Now(),
-		ControlPlaneCount:           swag.Int64Value(params.NewClusterParams.ControlPlaneCount),
 	}
 
 	if err = cluster.SetMirrorRegistryConfiguration(mirrorRegistryConfiguration); err != nil {
@@ -1947,21 +1947,21 @@ func validateHighAvailabilityWithControlPlaneCount(highAvailabilityMode string, 
 		)
 	}
 
-	stretchedClustersNotSuported, err := common.BaseVersionLessThan(common.MinimumVersionForStretchedControlPlanesCluster, openshiftVersion)
+	nonStandardHAOCPControlPlaneNotSuported, err := common.BaseVersionLessThan(common.MinimumVersionForNonStandardHAOCPControlPlane, openshiftVersion)
 	if err != nil {
 		return err
 	}
 
 	if highAvailabilityMode == models.ClusterCreateParamsHighAvailabilityModeFull &&
 		controlPlaneCount != common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder &&
-		stretchedClustersNotSuported {
+		nonStandardHAOCPControlPlaneNotSuported {
 		return common.NewApiError(
 			http.StatusBadRequest,
 			fmt.Errorf(
 				"there should be exactly %d dedicated control plane nodes for high availability mode %s in openshift version older than %s",
 				common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder,
 				highAvailabilityMode,
-				common.MinimumVersionForStretchedControlPlanesCluster,
+				common.MinimumVersionForNonStandardHAOCPControlPlane,
 			),
 		)
 	}
@@ -1976,7 +1976,7 @@ func validateHighAvailabilityWithControlPlaneCount(highAvailabilityMode string, 
 				common.MinMasterHostsNeededForInstallationInHaMode,
 				common.MaxMasterHostsNeededForInstallationInHaModeOfOCP418OrNewer,
 				highAvailabilityMode,
-				common.MinimumVersionForStretchedControlPlanesCluster,
+				common.MinimumVersionForNonStandardHAOCPControlPlane,
 			),
 		)
 	}
@@ -3800,7 +3800,7 @@ func (b *bareMetalInventory) DownloadMinimalInitrd(ctx context.Context, params i
 	if infraEnv.StaticNetworkConfig != "" {
 		// backward compatibility - nmstate.service has been available on RHCOS since version 4.14+, therefore, we should maintain both flows
 		var ok bool
-		ok, err = b.staticNetworkConfig.NMStatectlServiceSupported(infraEnv.OpenshiftVersion, infraEnv.CPUArchitecture)
+		ok, err = b.staticNetworkConfig.NMStatectlServiceSupported(infraEnv.OpenshiftVersion)
 		if err != nil {
 			return common.GenerateErrorResponder(err)
 		}
@@ -4871,7 +4871,7 @@ func (b *bareMetalInventory) validateInfraEnvCreateParams(ctx context.Context, p
 	}
 
 	if params.InfraenvCreateParams.StaticNetworkConfig != nil {
-		if err = b.staticNetworkConfig.ValidateStaticConfigParamsYAML(params.InfraenvCreateParams.StaticNetworkConfig, params.InfraenvCreateParams.OpenshiftVersion, params.InfraenvCreateParams.CPUArchitecture, b.installerInvoker); err != nil {
+		if err = b.staticNetworkConfig.ValidateStaticConfigParamsYAML(params.InfraenvCreateParams.StaticNetworkConfig, params.InfraenvCreateParams.OpenshiftVersion, b.installerInvoker); err != nil {
 			return err
 		}
 	}
@@ -4894,15 +4894,7 @@ func (b *bareMetalInventory) setDefaultRegisterInfraEnvParams(_ context.Context,
 		params.InfraenvCreateParams.AdditionalNtpSources = &b.Config.DefaultNTPSource
 	}
 
-	// set the default value for REST API case, in case it was not provided in the request
-	if params.InfraenvCreateParams.ImageType == "" {
-		if params.InfraenvCreateParams.CPUArchitecture == models.ClusterCPUArchitectureS390x {
-			b.log.Infof("Found Z architecture, updating ISO image type to %s", models.ImageTypeFullIso)
-			params.InfraenvCreateParams.ImageType = models.ImageTypeFullIso
-		} else {
-			params.InfraenvCreateParams.ImageType = models.ImageType(b.Config.ISOImageType)
-		}
-	}
+	params.InfraenvCreateParams.ImageType = infraenv.GetInfraEnvIsoImageType(b.log, params.InfraenvCreateParams.CPUArchitecture, params.InfraenvCreateParams.ImageType, models.ImageType(b.Config.ISOImageType))
 
 	if params.InfraenvCreateParams.CPUArchitecture == "" {
 		// Specifying architecture in params is optional, fallback to default
@@ -5058,7 +5050,7 @@ func (b *bareMetalInventory) UpdateInfraEnvInternal(ctx context.Context, params 
 		}
 
 		if params.InfraEnvUpdateParams.StaticNetworkConfig != nil {
-			if err = b.staticNetworkConfig.ValidateStaticConfigParamsYAML(params.InfraEnvUpdateParams.StaticNetworkConfig, infraEnv.OpenshiftVersion, infraEnv.CPUArchitecture, b.installerInvoker); err != nil {
+			if err = b.staticNetworkConfig.ValidateStaticConfigParamsYAML(params.InfraEnvUpdateParams.StaticNetworkConfig, infraEnv.OpenshiftVersion, b.installerInvoker); err != nil {
 				return common.NewApiError(http.StatusBadRequest, err)
 			}
 		}
@@ -6013,7 +6005,7 @@ func (b *bareMetalInventory) V2DownloadInfraEnvFiles(ctx context.Context, params
 		if infraEnv.StaticNetworkConfig != "" {
 			// backward compatibility - nmstate.service has been available on RHCOS since version 4.14+, therefore, we should maintain both flows
 			var ok bool
-			ok, err = b.staticNetworkConfig.NMStatectlServiceSupported(infraEnv.OpenshiftVersion, infraEnv.CPUArchitecture)
+			ok, err = b.staticNetworkConfig.NMStatectlServiceSupported(infraEnv.OpenshiftVersion)
 			if err != nil {
 				return common.GenerateErrorResponder(err)
 			}
@@ -6580,17 +6572,6 @@ func isBaremetalBinaryFromAnotherReleaseImageRequired(cpuArchitecture, version s
 // capabilities mechanism to disable the console then the console operator is removed from the list
 // of monitored operators.
 func (b *bareMetalInventory) updateMonitoredOperators(tx *gorm.DB, cluster *common.Cluster) error {
-	// Get the complete installer configuration, including the overrides:
-	installConfigData, err := b.installConfigBuilder.GetInstallConfig(cluster, nil, "")
-	if err != nil {
-		return err
-	}
-	var installConfig installcfgdata.InstallerConfigBaremetal
-	err = json.Unmarshal(installConfigData, &installConfig)
-	if err != nil {
-		return err
-	}
-
 	// Since version 4.12 it is possible to disable the console via the capabilities section of
 	// the installer configuration. The way to do it is to set the base capability set to `None`
 	// and then explicitly list all the enabled capabilities.
@@ -6605,19 +6586,8 @@ func (b *bareMetalInventory) updateMonitoredOperators(tx *gorm.DB, cluster *comm
 		return err
 	}
 	if consoleCapabilitySupported {
-		capabilities := installConfig.Capabilities
-		if capabilities != nil {
-			logFields["baseline_capability_set"] = capabilities.BaselineCapabilitySet
-			logFields["additional_enabled_capabilities"] = capabilities.AdditionalEnabledCapabilities
-			if capabilities.BaselineCapabilitySet == "None" {
-				consoleEnabled = false
-				for _, capability := range capabilities.AdditionalEnabledCapabilities {
-					if capability == "Console" {
-						consoleEnabled = true
-						break
-					}
-				}
-			}
+		if clusterPkg.HasBaseCapabilities(cluster, configv1.ClusterVersionCapabilitySetNone) {
+			consoleEnabled = clusterPkg.HasAdditionalCapabilities(cluster, []configv1.ClusterVersionCapability{configv1.ClusterVersionCapabilityConsole})
 		}
 		if consoleEnabled {
 			b.log.WithFields(logFields).Info(
@@ -6662,4 +6632,33 @@ func (b *bareMetalInventory) HandleVerifyVipsResponse(ctx context.Context, host 
 		return errors.Errorf("host %s infra-env %s: empty cluster id", host.ID.String(), host.InfraEnvID.String())
 	}
 	return b.clusterApi.HandleVerifyVipsResponse(ctx, *host.ClusterID, stepReply)
+}
+
+func getDefaultHighAvailabilityAndMasterCountParams(highAvailabilityMode *string, controlPlaneCount *int64) (*string, *int64) {
+	// Both not set, multi node by default
+	if highAvailabilityMode == nil && controlPlaneCount == nil {
+		return swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
+			swag.Int64(common.MinMasterHostsNeededForInstallationInHaMode)
+	}
+
+	// only highAvailabilityMode set
+	if controlPlaneCount == nil {
+		if *highAvailabilityMode == models.ClusterHighAvailabilityModeNone {
+			return highAvailabilityMode, swag.Int64(common.AllowedNumberOfMasterHostsInNoneHaMode)
+		}
+
+		return highAvailabilityMode, swag.Int64(common.MinMasterHostsNeededForInstallationInHaMode)
+	}
+
+	// only controlPlaneCount set
+	if highAvailabilityMode == nil {
+		if *controlPlaneCount == common.AllowedNumberOfMasterHostsInNoneHaMode {
+			return swag.String(models.ClusterHighAvailabilityModeNone), controlPlaneCount
+		}
+
+		return swag.String(models.ClusterHighAvailabilityModeFull), controlPlaneCount
+	}
+
+	// both are set
+	return highAvailabilityMode, controlPlaneCount
 }

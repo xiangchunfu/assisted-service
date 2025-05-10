@@ -692,37 +692,6 @@ var _ = Describe("SufficientMastersCount", func() {
 	})
 
 	Context("pass validation", func() {
-		It("with matching counts, default ControlPlaneCount", func() {
-			mockHostAPI.EXPECT().
-				IsValidMasterCandidate(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(true, nil).AnyTimes()
-
-			preprocessContext := &clusterPreprocessContext{
-				clusterId: clusterID,
-				cluster: &common.Cluster{Cluster: models.Cluster{
-					ID:                   &clusterID,
-					OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
-					HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
-					Hosts: []*models.Host{
-						{
-							Role: models.HostRoleMaster,
-						},
-						{
-							Role: models.HostRoleMaster,
-						},
-						{
-							Role: models.HostRoleMaster,
-						},
-					},
-				}},
-			}
-
-			status, message := validator.SufficientMastersCount(preprocessContext)
-			Expect(status).To(Equal(ValidationSuccess))
-			Expect(message).To(Equal("The cluster has the exact amount of dedicated control plane nodes."))
-		})
-
 		It("with matching counts, set ControlPlaneCount", func() {
 			mockHostAPI.EXPECT().
 				IsValidMasterCandidate(
@@ -732,11 +701,11 @@ var _ = Describe("SufficientMastersCount", func() {
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
 				cluster: &common.Cluster{
-					ControlPlaneCount: 3,
 					Cluster: models.Cluster{
 						ID:                   &clusterID,
-						OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
+						ControlPlaneCount:    3,
 						Hosts: []*models.Host{
 							{
 								Role: models.HostRoleMaster,
@@ -756,31 +725,6 @@ var _ = Describe("SufficientMastersCount", func() {
 			Expect(message).To(Equal("The cluster has the exact amount of dedicated control plane nodes."))
 		})
 
-		It("with SNO cluster, default controlPlaneCount", func() {
-			mockHostAPI.EXPECT().
-				IsValidMasterCandidate(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(true, nil).AnyTimes()
-
-			preprocessContext := &clusterPreprocessContext{
-				clusterId: clusterID,
-				cluster: &common.Cluster{Cluster: models.Cluster{
-					ID:                   &clusterID,
-					OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
-					HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
-					Hosts: []*models.Host{
-						{
-							Role: models.HostRoleMaster,
-						},
-					},
-				}},
-			}
-
-			status, message := validator.SufficientMastersCount(preprocessContext)
-			Expect(status).To(Equal(ValidationSuccess))
-			Expect(message).To(Equal("The cluster has the exact amount of dedicated control plane nodes."))
-		})
-
 		It("with SNO cluster, set controlPlaneCount", func() {
 			mockHostAPI.EXPECT().
 				IsValidMasterCandidate(
@@ -790,11 +734,11 @@ var _ = Describe("SufficientMastersCount", func() {
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
 				cluster: &common.Cluster{
-					ControlPlaneCount: 1,
 					Cluster: models.Cluster{
 						ID:                   &clusterID,
-						OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
+						ControlPlaneCount:    1,
 						Hosts: []*models.Host{
 							{
 								Role: models.HostRoleMaster,
@@ -817,11 +761,11 @@ var _ = Describe("SufficientMastersCount", func() {
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
 				cluster: &common.Cluster{
-					ControlPlaneCount: 5,
 					Cluster: models.Cluster{
 						ID:                   &clusterID,
-						OpenshiftVersion:     common.MinimumVersionForStretchedControlPlanesCluster,
+						OpenshiftVersion:     common.MinimumVersionForNonStandardHAOCPControlPlane,
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
+						ControlPlaneCount:    5,
 						Hosts: []*models.Host{
 							{
 								Role: models.HostRoleMaster,
@@ -849,47 +793,6 @@ var _ = Describe("SufficientMastersCount", func() {
 	})
 
 	Context("fails validation", func() {
-		It("with multi node cluster, 5 masters but expected 3 by default", func() {
-			mockHostAPI.EXPECT().
-				IsValidMasterCandidate(
-					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(true, nil).AnyTimes()
-
-			preprocessContext := &clusterPreprocessContext{
-				clusterId: clusterID,
-				cluster: &common.Cluster{
-					Cluster: models.Cluster{
-						ID:                   &clusterID,
-						OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
-						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
-						Hosts: []*models.Host{
-							{
-								Role: models.HostRoleMaster,
-							},
-							{
-								Role: models.HostRoleMaster,
-							},
-							{
-								Role: models.HostRoleMaster,
-							},
-							{
-								Role: models.HostRoleMaster,
-							},
-							{
-								Role: models.HostRoleMaster,
-							},
-						},
-					}},
-			}
-
-			status, message := validator.SufficientMastersCount(preprocessContext)
-			Expect(status).To(Equal(ValidationFailure))
-			Expect(message).To(Equal(fmt.Sprintf(
-				"The cluster must have exactly %d dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement.",
-				common.MinMasterHostsNeededForInstallationInHaMode,
-			)))
-		})
-
 		It("with multi node cluster, 5 masters but expected 3", func() {
 			mockHostAPI.EXPECT().
 				IsValidMasterCandidate(
@@ -899,11 +802,11 @@ var _ = Describe("SufficientMastersCount", func() {
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
 				cluster: &common.Cluster{
-					ControlPlaneCount: 3,
 					Cluster: models.Cluster{
 						ID:                   &clusterID,
-						OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
+						ControlPlaneCount:    3,
 						Hosts: []*models.Host{
 							{
 								Role: models.HostRoleMaster,
@@ -937,19 +840,21 @@ var _ = Describe("SufficientMastersCount", func() {
 
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
-				cluster: &common.Cluster{Cluster: models.Cluster{
-					ID:                   &clusterID,
-					OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
-					HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
-					Hosts: []*models.Host{
-						{
-							Role: models.HostRoleMaster,
+				cluster: &common.Cluster{
+					Cluster: models.Cluster{
+						ID:                   &clusterID,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
+						ControlPlaneCount:    1,
+						Hosts: []*models.Host{
+							{
+								Role: models.HostRoleMaster,
+							},
+							{
+								Role: models.HostRoleMaster,
+							},
 						},
-						{
-							Role: models.HostRoleMaster,
-						},
-					},
-				}},
+					}},
 			}
 
 			status, message := validator.SufficientMastersCount(preprocessContext)
@@ -965,19 +870,21 @@ var _ = Describe("SufficientMastersCount", func() {
 
 			preprocessContext := &clusterPreprocessContext{
 				clusterId: clusterID,
-				cluster: &common.Cluster{Cluster: models.Cluster{
-					ID:                   &clusterID,
-					OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
-					HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
-					Hosts: []*models.Host{
-						{
-							Role: models.HostRoleMaster,
+				cluster: &common.Cluster{
+					Cluster: models.Cluster{
+						ID:                   &clusterID,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
+						ControlPlaneCount:    1,
+						Hosts: []*models.Host{
+							{
+								Role: models.HostRoleMaster,
+							},
+							{
+								Role: models.HostRoleWorker,
+							},
 						},
-						{
-							Role: models.HostRoleWorker,
-						},
-					},
-				}},
+					}},
 			}
 
 			status, message := validator.SufficientMastersCount(preprocessContext)

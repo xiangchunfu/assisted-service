@@ -177,6 +177,106 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 		)
 	})
 
+	Context("Test non-standard HA OCP Control Plane", func() {
+		feature := models.FeatureSupportLevelIDNONSTANDARDHACONTROLPLANE
+		arch := common.X86CPUArchitecture
+
+		It("test feature availability", func() {
+			Expect(IsFeatureAvailable(feature, common.MinimumVersionForNonStandardHAOCPControlPlane, swag.String(arch))).To(BeTrue())
+			Expect(IsFeatureAvailable(feature, "4.17", swag.String(arch))).To(BeFalse())
+		})
+
+		DescribeTable("test feature compatability with other features", func(activeFeatures []SupportLevelFeature, shouldSucceed bool) {
+			activeFeatures = append(activeFeatures, &NonStandardHAControlPlane{})
+
+			if shouldSucceed {
+				Expect(
+					isFeaturesCompatibleWithFeatures(
+						common.MinimumVersionForNonStandardHAOCPControlPlane,
+						activeFeatures),
+				).ToNot(HaveOccurred())
+			} else {
+				Expect(
+					isFeaturesCompatibleWithFeatures(
+						common.MinimumVersionForNonStandardHAOCPControlPlane,
+						activeFeatures),
+				).To(HaveOccurred())
+			}
+		},
+			Entry(
+				"platform baremetal",
+				[]SupportLevelFeature{&BaremetalPlatformFeature{}},
+				true,
+			),
+
+			Entry(
+				"none platform",
+				[]SupportLevelFeature{&NonePlatformFeature{}},
+				true,
+			),
+
+			Entry(
+				"external platform",
+				[]SupportLevelFeature{&ExternalPlatformFeature{}},
+				false,
+			),
+
+			Entry(
+				"nutanix platform",
+				[]SupportLevelFeature{&NutanixIntegrationFeature{}},
+				false,
+			),
+
+			Entry(
+				"vsphere platform",
+				[]SupportLevelFeature{&VsphereIntegrationFeature{}},
+				false,
+			),
+		)
+
+		DescribeTable(
+			"test feature architecture support",
+			func(arch string, result bool) {
+				Expect(
+					isFeatureCompatibleWithArchitecture(
+						&NonStandardHAControlPlane{},
+						common.MinimumVersionForNonStandardHAOCPControlPlane,
+						arch,
+					),
+				).To(Equal(result))
+			},
+			Entry(
+				common.X86CPUArchitecture,
+				common.X86CPUArchitecture,
+				true,
+			),
+
+			Entry(
+				common.ARM64CPUArchitecture,
+				common.ARM64CPUArchitecture,
+				false,
+			),
+
+			Entry(
+				common.S390xCPUArchitecture,
+				common.S390xCPUArchitecture,
+				false,
+			),
+
+			Entry(
+				common.PowerCPUArchitecture,
+				common.PowerCPUArchitecture,
+				false,
+			),
+
+			Entry(
+				common.MultiCPUArchitecture,
+				common.MultiCPUArchitecture,
+				false,
+			),
+		)
+	})
+
 	Context("Test MCE not supported under 4.10", func() {
 		feature := models.FeatureSupportLevelIDMCE
 		It(fmt.Sprintf("%s test", feature), func() {
@@ -269,19 +369,19 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 			When("GetFeatureSupportList 4.12 with Platform", func() {
 				It(string(*filters.PlatformType)+" "+swag.StringValue(filters.ExternalPlatformName), func() {
 					list := GetFeatureSupportList("dummy", nil, filters.PlatformType, filters.ExternalPlatformName)
-					Expect(len(list)).To(Equal(26))
+					Expect(len(list)).To(Equal(29))
 				})
 			})
 		}
 
 		It("GetFeatureSupportList 4.12", func() {
 			list := GetFeatureSupportList("4.12", nil, nil, nil)
-			Expect(len(list)).To(Equal(31))
+			Expect(len(list)).To(Equal(34))
 		})
 
 		It("GetFeatureSupportList 4.13", func() {
 			list := GetFeatureSupportList("4.13", nil, nil, nil)
-			Expect(len(list)).To(Equal(31))
+			Expect(len(list)).To(Equal(34))
 		})
 
 		It("GetCpuArchitectureSupportList 4.12", func() {

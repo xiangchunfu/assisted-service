@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/assisted-service/internal/cluster"
 	"github.com/openshift/assisted-service/internal/common"
 	"github.com/openshift/assisted-service/internal/operators"
+	"github.com/openshift/assisted-service/internal/operators/authorino"
 	"github.com/openshift/assisted-service/internal/operators/cnv"
 	operatorscommon "github.com/openshift/assisted-service/internal/operators/common"
 	"github.com/openshift/assisted-service/internal/operators/lso"
@@ -26,6 +27,7 @@ import (
 	"github.com/openshift/assisted-service/internal/operators/nvidiagpu"
 	"github.com/openshift/assisted-service/internal/operators/odf"
 	"github.com/openshift/assisted-service/internal/operators/openshiftai"
+	"github.com/openshift/assisted-service/internal/operators/osc"
 	"github.com/openshift/assisted-service/internal/operators/pipelines"
 	"github.com/openshift/assisted-service/internal/operators/serverless"
 	"github.com/openshift/assisted-service/internal/operators/servicemesh"
@@ -50,12 +52,14 @@ var _ = Describe("Operators endpoint tests", func() {
 				lvm.Operator.Name,
 				mce.Operator.Name,
 				mtv.Operator.Name,
+				osc.Operator.Name,
 				nodefeaturediscovery.Operator.Name,
 				nvidiagpu.Operator.Name,
 				pipelines.Operator.Name,
 				servicemesh.Operator.Name,
 				serverless.Operator.Name,
 				openshiftai.Operator.Name,
+				authorino.Operator.Name,
 			))
 		})
 

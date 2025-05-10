@@ -11,12 +11,13 @@ import (
 
 var featuresList = map[models.FeatureSupportLevelID]SupportLevelFeature{
 	// Generic features
-	models.FeatureSupportLevelIDSNO:                 (&SnoFeature{}).New(),
-	models.FeatureSupportLevelIDCUSTOMMANIFEST:      (&CustomManifestFeature{}).New(),
-	models.FeatureSupportLevelIDSINGLENODEEXPANSION: (&SingleNodeExpansionFeature{}).New(),
-	models.FeatureSupportLevelIDMINIMALISO:          (&MinimalIso{}).New(),
-	models.FeatureSupportLevelIDFULLISO:             (&FullIso{}).New(),
-	models.FeatureSupportLevelIDSKIPMCOREBOOT:       &skipMcoReboot{},
+	models.FeatureSupportLevelIDSNO:                       (&SnoFeature{}).New(),
+	models.FeatureSupportLevelIDCUSTOMMANIFEST:            (&CustomManifestFeature{}).New(),
+	models.FeatureSupportLevelIDSINGLENODEEXPANSION:       (&SingleNodeExpansionFeature{}).New(),
+	models.FeatureSupportLevelIDMINIMALISO:                (&MinimalIso{}).New(),
+	models.FeatureSupportLevelIDFULLISO:                   (&FullIso{}).New(),
+	models.FeatureSupportLevelIDSKIPMCOREBOOT:             &skipMcoReboot{},
+	models.FeatureSupportLevelIDNONSTANDARDHACONTROLPLANE: (&NonStandardHAControlPlane{}).New(),
 
 	// Network features
 	models.FeatureSupportLevelIDVIPAUTOALLOC:              (&VipAutoAllocFeature{}).New(),
@@ -35,12 +36,14 @@ var featuresList = map[models.FeatureSupportLevelID]SupportLevelFeature{
 	models.FeatureSupportLevelIDMCE:                  (&MceFeature{}).New(),
 	models.FeatureSupportLevelIDODF:                  (&OdfFeature{}).New(),
 	models.FeatureSupportLevelIDMTV:                  (&MtvFeature{}).New(),
+	models.FeatureSupportLevelIDOSC:                  (&OscFeature{}).New(),
 	models.FeatureSupportLevelIDNODEFEATUREDISCOVERY: (&NodeFeatureDiscoveryFeature{}).New(),
 	models.FeatureSupportLevelIDNVIDIAGPU:            (&NvidiaGPUFeature{}).New(),
 	models.FeatureSupportLevelIDPIPELINES:            (&PipelinesFeature{}).New(),
 	models.FeatureSupportLevelIDSERVICEMESH:          (&ServiceMeshFeature{}).New(),
 	models.FeatureSupportLevelIDSERVERLESS:           (&ServerLessFeature{}).New(),
 	models.FeatureSupportLevelIDOPENSHIFTAI:          (&OpenShiftAIFeature{}).New(),
+	models.FeatureSupportLevelIDAUTHORINO:            (&AuthorinoFeature{}).New(),
 
 	// Platform features
 	models.FeatureSupportLevelIDNUTANIXINTEGRATION:  (&NutanixIntegrationFeature{}).New(),

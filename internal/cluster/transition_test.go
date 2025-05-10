@@ -974,7 +974,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, too much masters - stretched masters cluster not available",
+				name:            "pending-for-input to insufficient, too much masters - non-standard HA OCP Control Plane not available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1009,7 +1009,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, not enough masters - stretched masters cluster not available",
+				name:            "pending-for-input to insufficient, not enough masters - non-standard HA OCP Control Plane not available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1042,7 +1042,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, too much masters - stretched masters cluster available",
+				name:            "pending-for-input to insufficient, too much masters - non-standard HA OCP Control Plane available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1069,13 +1069,14 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 					IsDNSDomainDefined:                  {status: ValidationSuccess, messagePattern: "The base domain is defined"},
 					IsPullSecretSet:                     {status: ValidationSuccess, messagePattern: "The pull secret is set"},
 					isNetworkTypeValid:                  {status: ValidationSuccess, messagePattern: "The cluster has a valid network type"},
-					SufficientMastersCount:              {status: ValidationFailure, messagePattern: fmt.Sprintf("The cluster must have exactly %d dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement.", common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder)},
+					SufficientMastersCount:              {status: ValidationFailure, messagePattern: "The cluster must have exactly 5 dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement."},
 				}),
-				errorExpected:    false,
-				openshiftVersion: common.MinimumVersionForStretchedControlPlanesCluster,
+				errorExpected:     false,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
+				controlPlaneCount: 5,
 			},
 			{
-				name:            "pending-for-input to insufficient, not enough masters - stretched masters cluster available",
+				name:            "pending-for-input to insufficient, not enough masters - non-standard HA OCP Control Plane available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1086,6 +1087,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 				hosts: []models.Host{
 					{ID: &hid1, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
 					{ID: &hid2, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
+					{ID: &hid3, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
 				},
 				statusInfoChecker: makeValueChecker(StatusInfoInsufficient),
 				validationsChecker: makeJsonChecker(map[ValidationID]validationCheckResult{
@@ -1099,13 +1101,14 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 					IsDNSDomainDefined:                  {status: ValidationSuccess, messagePattern: "The base domain is defined"},
 					IsPullSecretSet:                     {status: ValidationSuccess, messagePattern: "The pull secret is set"},
 					isNetworkTypeValid:                  {status: ValidationSuccess, messagePattern: "The cluster has a valid network type"},
-					SufficientMastersCount:              {status: ValidationFailure, messagePattern: fmt.Sprintf("The cluster must have exactly %d dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement.", common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder)},
+					SufficientMastersCount:              {status: ValidationFailure, messagePattern: "The cluster must have exactly 4 dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement."},
 				}),
-				errorExpected:    false,
-				openshiftVersion: common.MinimumVersionForStretchedControlPlanesCluster,
+				errorExpected:     false,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
+				controlPlaneCount: 4,
 			},
 			{
-				name:            "pending-for-input to ready, sufficient amount of potential masters - stretched masters cluster not available",
+				name:            "pending-for-input to ready, sufficient amount of potential masters - non-standard HA OCP Control Plane not available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusReady,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1135,7 +1138,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to ready, sufficient amount of potential masters - stretched masters cluster available",
+				name:            "pending-for-input to ready, sufficient amount of potential masters - non-standard HA OCP Control Plane available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusReady,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -1165,7 +1168,7 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 					SufficientMastersCount:              {status: ValidationSuccess, messagePattern: "The cluster has the exact amount of dedicated control plane nodes."},
 				}),
 				errorExpected:     false,
-				openshiftVersion:  common.MinimumVersionForStretchedControlPlanesCluster,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
 				controlPlaneCount: 5,
 			},
 			{
@@ -1510,25 +1513,29 @@ var _ = Describe("Refresh Cluster - No DHCP", func() {
 			It(t.name, func() {
 				cluster = common.Cluster{
 					Cluster: models.Cluster{
-						APIVips:          t.apiVips,
-						ID:               &clusterId,
-						IngressVips:      t.ingressVips,
-						MachineNetworks:  t.machineNetworks,
-						Status:           &t.srcState,
-						StatusInfo:       &t.srcStatusInfo,
-						BaseDNSDomain:    t.dnsDomain,
-						PullSecretSet:    t.pullSecretSet,
-						ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-						ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-						NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-						StatusUpdatedAt:  strfmt.DateTime(time.Now()),
-						OpenshiftVersion: t.openshiftVersion,
+						APIVips:           t.apiVips,
+						ID:                &clusterId,
+						IngressVips:       t.ingressVips,
+						MachineNetworks:   t.machineNetworks,
+						Status:            &t.srcState,
+						StatusInfo:        &t.srcStatusInfo,
+						BaseDNSDomain:     t.dnsDomain,
+						PullSecretSet:     t.pullSecretSet,
+						ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+						ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+						NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+						StatusUpdatedAt:   strfmt.DateTime(time.Now()),
+						OpenshiftVersion:  t.openshiftVersion,
+						ControlPlaneCount: t.controlPlaneCount,
 					},
-					ControlPlaneCount: t.controlPlaneCount,
 				}
 
 				if cluster.Cluster.OpenshiftVersion == "" {
-					cluster.Cluster.OpenshiftVersion = testing.ValidOCPVersionForNonStretchedClusters
+					cluster.Cluster.OpenshiftVersion = testing.ValidOCPVersionForNonStandardHAOCPControlPlane
+				}
+
+				if cluster.ControlPlaneCount == 0 {
+					cluster.ControlPlaneCount = 3
 				}
 
 				Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
@@ -1787,19 +1794,20 @@ var _ = Describe("Refresh Cluster - Same networks", func() {
 			It(t.name, func() {
 				cluster = common.Cluster{
 					Cluster: models.Cluster{
-						APIVips:          t.apiVips,
-						ID:               &clusterId,
-						IngressVips:      t.ingressVips,
-						MachineNetworks:  t.machineNetworks,
-						Status:           &t.srcState,
-						StatusInfo:       &t.srcStatusInfo,
-						BaseDNSDomain:    t.dnsDomain,
-						PullSecretSet:    t.pullSecretSet,
-						ClusterNetworks:  t.clusterNetworks,
-						ServiceNetworks:  t.serviceNetworks,
-						NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-						StatusUpdatedAt:  strfmt.DateTime(time.Now()),
-						OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
+						APIVips:           t.apiVips,
+						ID:                &clusterId,
+						IngressVips:       t.ingressVips,
+						MachineNetworks:   t.machineNetworks,
+						Status:            &t.srcState,
+						StatusInfo:        &t.srcStatusInfo,
+						BaseDNSDomain:     t.dnsDomain,
+						PullSecretSet:     t.pullSecretSet,
+						ClusterNetworks:   t.clusterNetworks,
+						ServiceNetworks:   t.serviceNetworks,
+						NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+						StatusUpdatedAt:   strfmt.DateTime(time.Now()),
+						OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						ControlPlaneCount: 3,
 					},
 				}
 				Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
@@ -2050,7 +2058,8 @@ var _ = Describe("RefreshCluster - preparing for install", func() {
 						Status: t.lastInstallationPreparationStatus,
 						Reason: t.lastInstallationPreparationReason,
 					},
-					OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
+					OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+					ControlPlaneCount: 3,
 				},
 			}
 			Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
@@ -2146,6 +2155,7 @@ var _ = Describe("Refresh Cluster - Advanced networking validations", func() {
 			vipDhcpAllocation     bool
 			networkType           string
 			sno                   bool
+			controlPlaneCount     int64
 		}{
 			{
 				name:            "pending-for-input to pending-for-input",
@@ -2289,7 +2299,8 @@ var _ = Describe("Refresh Cluster - Advanced networking validations", func() {
 					networkPrefixValid:                  {status: ValidationFailure, messagePattern: "Host prefix, now 0, must be a positive integer"},
 					isNetworkTypeValid:                  {status: ValidationSuccess, messagePattern: "The cluster has a valid network type"},
 				}),
-				errorExpected: false,
+				errorExpected:     false,
+				controlPlaneCount: 1,
 			},
 			{
 				name:     "pending-for-input to insufficient - overlapping",
@@ -2573,7 +2584,8 @@ var _ = Describe("Refresh Cluster - Advanced networking validations", func() {
 					networkPrefixValid:                  {status: ValidationSuccess, messagePattern: "Cluster Network prefix is valid."},
 					isNetworkTypeValid:                  {status: ValidationFailure, messagePattern: regexp.QuoteMeta("High-availability mode 'None' (SNO) is not supported by OpenShiftSDN; use another network type instead")},
 				}),
-				errorExpected: false,
+				errorExpected:     false,
+				controlPlaneCount: 1,
 			},
 		}
 
@@ -2595,9 +2607,15 @@ var _ = Describe("Refresh Cluster - Advanced networking validations", func() {
 						UserManagedNetworking: &t.userManagedNetworking,
 						NetworkType:           &t.networkType,
 						VipDhcpAllocation:     &t.vipDhcpAllocation,
-						OpenshiftVersion:      testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:      testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						ControlPlaneCount:     t.controlPlaneCount,
 					},
 				}
+
+				if cluster.ControlPlaneCount == 0 {
+					cluster.ControlPlaneCount = 3
+				}
+
 				if t.sno {
 					ha := models.ClusterHighAvailabilityModeNone
 					cluster.HighAvailabilityMode = &ha
@@ -3063,7 +3081,8 @@ var _ = Describe("Refresh Cluster - Advanced networking validations", func() {
 						BaseDNSDomain:         "test.com",
 						UserManagedNetworking: &t.userManagedNetworking,
 						NetworkType:           &t.networkType,
-						OpenshiftVersion:      testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:      testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						ControlPlaneCount:     3,
 					},
 				}
 				Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
@@ -3186,6 +3205,7 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 			vipDhcpAllocation       bool
 			errorExpected           bool
 			openshiftVersion        string
+			controlPlaneCount       int64
 		}{
 			{
 				name:              "pending-for-input to pending-for-input",
@@ -3222,7 +3242,7 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, too much masters - stretched masters cluster not available",
+				name:            "pending-for-input to insufficient, too much masters - non-standard HA OCP Control Plane not available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -3256,7 +3276,7 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, not enough masters - stretched masters cluster not available",
+				name:            "pending-for-input to insufficient, not enough masters - non-standard HA OCP Control Plane not available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -3288,7 +3308,7 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 				errorExpected: false,
 			},
 			{
-				name:            "pending-for-input to insufficient, too much masters - stretched masters cluster available",
+				name:            "pending-for-input to insufficient, too much masters - non-standard HA OCP Control Plane available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -3315,13 +3335,14 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 					AllHostsAreReadyToInstall:           {status: ValidationSuccess, messagePattern: "All hosts in the cluster are ready to install"},
 					IsDNSDomainDefined:                  {status: ValidationSuccess, messagePattern: "The base domain is defined"},
 					IsPullSecretSet:                     {status: ValidationSuccess, messagePattern: "The pull secret is set."},
-					SufficientMastersCount:              {status: ValidationFailure, messagePattern: fmt.Sprintf("The cluster must have exactly %d dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement.", common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder)},
+					SufficientMastersCount:              {status: ValidationFailure, messagePattern: "The cluster must have exactly 5 dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement."},
 				}),
-				errorExpected:    false,
-				openshiftVersion: common.MinimumVersionForStretchedControlPlanesCluster,
+				errorExpected:     false,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
+				controlPlaneCount: 5,
 			},
 			{
-				name:            "pending-for-input to insufficient, not enough masters - stretched masters cluster available",
+				name:            "pending-for-input to insufficient, not enough masters - non-standard HA OCP Control Plane available",
 				srcState:        models.ClusterStatusPendingForInput,
 				dstState:        models.ClusterStatusInsufficient,
 				machineNetworks: common.TestIPv4Networking.MachineNetworks,
@@ -3332,6 +3353,7 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 				hosts: []models.Host{
 					{ID: &hid1, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
 					{ID: &hid2, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
+					{ID: &hid3, Status: swag.String(models.HostStatusKnown), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleMaster},
 				},
 				statusInfoChecker: makeValueChecker(StatusInfoInsufficient),
 				validationsChecker: makeJsonChecker(map[ValidationID]validationCheckResult{
@@ -3344,10 +3366,11 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 					AllHostsAreReadyToInstall:           {status: ValidationSuccess, messagePattern: "All hosts in the cluster are ready to install"},
 					IsDNSDomainDefined:                  {status: ValidationSuccess, messagePattern: "The base domain is defined"},
 					IsPullSecretSet:                     {status: ValidationSuccess, messagePattern: "The pull secret is set."},
-					SufficientMastersCount:              {status: ValidationFailure, messagePattern: fmt.Sprintf("The cluster must have exactly %d dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement.", common.AllowedNumberOfMasterHostsForInstallationInHaModeOfOCP417OrOlder)},
+					SufficientMastersCount:              {status: ValidationFailure, messagePattern: "The cluster must have exactly 4 dedicated control plane nodes. Add or remove hosts, or change their roles configurations to meet the requirement."},
 				}),
-				errorExpected:    false,
-				openshiftVersion: common.MinimumVersionForStretchedControlPlanesCluster,
+				errorExpected:     false,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
+				controlPlaneCount: 4,
 			},
 			{
 				name:            "pending-for-input to insufficient - not all hosts are ready to install - not enough workers",
@@ -3767,11 +3790,16 @@ var _ = Describe("Refresh Cluster - With DHCP", func() {
 						NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
 						StatusUpdatedAt:   strfmt.DateTime(time.Now()),
 						OpenshiftVersion:  t.openshiftVersion,
+						ControlPlaneCount: t.controlPlaneCount,
 					},
 				}
 
 				if cluster.Cluster.OpenshiftVersion == "" {
-					cluster.Cluster.OpenshiftVersion = testing.ValidOCPVersionForNonStretchedClusters
+					cluster.Cluster.OpenshiftVersion = testing.ValidOCPVersionForNonStandardHAOCPControlPlane
+				}
+
+				if cluster.ControlPlaneCount == 0 {
+					cluster.ControlPlaneCount = 3
 				}
 
 				if t.setMachineCidrUpdatedAt {
@@ -3882,7 +3910,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 			openshiftVersion    string
 		}{
 			{
-				name:          "installing to installing - non stretched cluster",
+				name:          "installing to installing - non non-standard HA OCP Control Plane",
 				srcState:      models.ClusterStatusInstalling,
 				srcStatusInfo: statusInfoInstalling,
 				dstState:      models.ClusterStatusInstalling,
@@ -3896,7 +3924,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 				statusInfoChecker: makeValueChecker(statusInfoInstalling),
 			},
 			{
-				name:          "installing to installing - stretched cluster",
+				name:          "installing to installing - non-standard HA OCP Control Plane",
 				srcState:      models.ClusterStatusInstalling,
 				srcStatusInfo: statusInfoInstalling,
 				dstState:      models.ClusterStatusInstalling,
@@ -3909,7 +3937,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 					{ID: &hid6, Status: swag.String(models.ClusterStatusInstalling), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleWorker},
 				},
 				statusInfoChecker: makeValueChecker(statusInfoInstalling),
-				openshiftVersion:  common.MinimumVersionForStretchedControlPlanesCluster,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
 			},
 			{
 				name:          "installing to installing-pending-user-action",
@@ -4070,7 +4098,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 				statusInfoChecker: makeValueChecker(statusInfoFinalizing),
 			},
 			{
-				name:          "installing to finalizing - non stretched cluster",
+				name:          "installing to finalizing - non non-standard HA OCP Control Plane",
 				srcState:      models.ClusterStatusInstalling,
 				srcStatusInfo: statusInfoInstalling,
 				dstState:      models.ClusterStatusFinalizing,
@@ -4084,7 +4112,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 				statusInfoChecker: makeValueChecker(statusInfoFinalizing),
 			},
 			{
-				name:          "installing to finalizing - stretched cluster",
+				name:          "installing to finalizing - non-standard HA OCP Control Plane",
 				srcState:      models.ClusterStatusInstalling,
 				srcStatusInfo: statusInfoInstalling,
 				dstState:      models.ClusterStatusFinalizing,
@@ -4096,7 +4124,7 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 					{ID: &hid5, Status: swag.String(models.HostStatusInstalled), Inventory: common.GenerateTestDefaultInventory(), Role: models.HostRoleWorker},
 				},
 				statusInfoChecker: makeValueChecker(statusInfoFinalizing),
-				openshiftVersion:  common.MinimumVersionForStretchedControlPlanesCluster,
+				openshiftVersion:  common.MinimumVersionForNonStandardHAOCPControlPlane,
 			},
 			{
 				name:          "installing to error - failing master",
@@ -4208,7 +4236,8 @@ var _ = Describe("Refresh Cluster - Installing Cases", func() {
 						PullSecretSet:      t.pullSecretSet,
 						MonitoredOperators: t.operators,
 						StatusUpdatedAt:    strfmt.DateTime(time.Now()),
-						OpenshiftVersion:   testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:   testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						ControlPlaneCount:  3,
 					},
 				}
 				if t.openshiftVersion != "" {
@@ -4687,18 +4716,19 @@ var _ = Describe("NTP refresh cluster", func() {
 			It(t.name, func() {
 				cluster = common.Cluster{
 					Cluster: models.Cluster{
-						ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-						ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-						MachineNetworks:  common.TestIPv4Networking.MachineNetworks,
-						APIVips:          common.TestIPv4Networking.APIVips,
-						IngressVips:      common.TestIPv4Networking.IngressVips,
-						ID:               &clusterId,
-						Status:           &t.srcState,
-						StatusInfo:       &t.srcStatusInfo,
-						BaseDNSDomain:    "test.com",
-						PullSecretSet:    t.pullSecretSet,
-						OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
-						NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
+						ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+						ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+						MachineNetworks:   common.TestIPv4Networking.MachineNetworks,
+						APIVips:           common.TestIPv4Networking.APIVips,
+						IngressVips:       common.TestIPv4Networking.IngressVips,
+						ID:                &clusterId,
+						Status:            &t.srcState,
+						StatusInfo:        &t.srcStatusInfo,
+						BaseDNSDomain:     "test.com",
+						PullSecretSet:     t.pullSecretSet,
+						OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+						ControlPlaneCount: 3,
 					},
 				}
 				Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
@@ -4792,6 +4822,7 @@ var _ = Describe("Single node", func() {
 			validationsChecker      *validationsChecker
 			setMachineCidrUpdatedAt bool
 			errorExpected           bool
+			controlPlaneCount       int64
 		}{
 			{
 				name:          "non ha mode, too many nodes",
@@ -4982,9 +5013,11 @@ var _ = Describe("Single node", func() {
 						PullSecretSet:        t.pullSecretSet,
 						NetworkType:          swag.String(models.ClusterNetworkTypeOVNKubernetes),
 						HighAvailabilityMode: &haMode,
-						OpenshiftVersion:     testing.ValidOCPVersionForNonStretchedClusters,
+						OpenshiftVersion:     testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+						ControlPlaneCount:    1,
 					},
 				}
+
 				if t.srcState == models.ClusterStatusPreparingForInstallation && t.dstState == models.ClusterStatusInstalling {
 					cluster.Cluster.StatusUpdatedAt = strfmt.DateTime(time.Now())
 					cluster.LastInstallationPreparation = models.LastInstallationPreparation{

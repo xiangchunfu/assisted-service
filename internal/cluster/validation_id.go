@@ -34,6 +34,7 @@ const (
 	IsLvmRequirementsSatisfied                  = ValidationID(models.ClusterValidationIDLvmRequirementsSatisfied)
 	IsMceRequirementsSatisfied                  = ValidationID(models.ClusterValidationIDMceRequirementsSatisfied)
 	IsMtvRequirementsSatisfied                  = ValidationID(models.ClusterValidationIDMtvRequirementsSatisfied)
+	IsOscRequirementsSatisfied                  = ValidationID(models.ClusterValidationIDOscRequirementsSatisfied)
 	PlatformRequirementsSatisfied               = ValidationID(models.ClusterValidationIDPlatformRequirementsSatisfied)
 	IsNodeFeatureDiscoveryRequirementsSatisfied = ValidationID(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)
 	IsNvidiaGPURequirementsSatisfied            = ValidationID(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)
@@ -41,6 +42,7 @@ const (
 	IsServiceMeshRequirementsSatisfied          = ValidationID(models.ClusterValidationIDServicemeshRequirementsSatisfied)
 	IsServerLessRequirementsSatisfied           = ValidationID(models.ClusterValidationIDServerlessRequirementsSatisfied)
 	IsOpenShiftAIRequirementsSatisfied          = ValidationID(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)
+	IsAuthorinoRequirementsSatisfied            = ValidationID(models.ClusterValidationIDAuthorinoRequirementsSatisfied)
 )
 
 func (v ValidationID) Category() (string, error) {
@@ -59,12 +61,14 @@ func (v ValidationID) Category() (string, error) {
 		IsLvmRequirementsSatisfied,
 		IsMceRequirementsSatisfied,
 		IsMtvRequirementsSatisfied,
+		IsOscRequirementsSatisfied,
 		IsNodeFeatureDiscoveryRequirementsSatisfied,
 		IsNvidiaGPURequirementsSatisfied,
 		IsPipelinesRequirementsSatisfied,
 		IsServiceMeshRequirementsSatisfied,
 		IsServerLessRequirementsSatisfied,
-		IsOpenShiftAIRequirementsSatisfied:
+		IsOpenShiftAIRequirementsSatisfied,
+		IsAuthorinoRequirementsSatisfied:
 		return "operators", nil
 	}
 	return "", common.NewApiError(http.StatusInternalServerError, errors.Errorf("Unexpected cluster validation id %s", string(v)))

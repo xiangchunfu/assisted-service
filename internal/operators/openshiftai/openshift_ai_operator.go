@@ -3,11 +3,13 @@ package openshiftai
 import (
 	"context"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/openshift/assisted-service/internal/common"
 	"github.com/openshift/assisted-service/internal/operators/api"
+	"github.com/openshift/assisted-service/internal/operators/authorino"
 	"github.com/openshift/assisted-service/internal/operators/nvidiagpu"
 	"github.com/openshift/assisted-service/internal/operators/odf"
 	"github.com/openshift/assisted-service/internal/operators/pipelines"
@@ -18,8 +20,6 @@ import (
 	"github.com/openshift/assisted-service/pkg/conversions"
 	"github.com/sirupsen/logrus"
 )
-
-const nvidiaVendorID = "10de"
 
 var Operator = models.MonitoredOperator{
 	Namespace:        "redhat-ods-operator",
@@ -70,8 +70,9 @@ func (o *operator) GetDependencies(c *common.Cluster) (result []string, err erro
 	// cluster is created or updated via the API, and at that point we don't have the host inventory yet to
 	// determine if there are NVIDIA GPU.
 	result = []string{
-		odf.Operator.Name,
+		authorino.Operator.Name,
 		nvidiagpu.Operator.Name,
+		odf.Operator.Name,
 		pipelines.Operator.Name,
 		serverless.Operator.Name,
 		servicemesh.Operator.Name,
@@ -166,12 +167,12 @@ func (o *operator) gpusInHost(host *models.Host) (result []*models.Gpu, err erro
 }
 
 func (o *operator) isSupportedGpu(gpu *models.Gpu) (result bool, err error) {
-	result, err = o.isNvidiaGpu(gpu)
-	return
-}
-
-func (o *operator) isNvidiaGpu(gpu *models.Gpu) (result bool, err error) {
-	result = gpu.VendorID == nvidiaVendorID
+	for _, supportedGpu := range o.config.SupportedGPUs {
+		if strings.EqualFold(gpu.VendorID, supportedGpu) {
+			result = true
+			return
+		}
+	}
 	return
 }
 

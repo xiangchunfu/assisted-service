@@ -7873,8 +7873,8 @@ var _ = Describe("V2UpdateCluster", func() {
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.16",
+							ControlPlaneCount:    3,
 						},
-						ControlPlaneCount: 3,
 					}
 
 					err := db.Create(cluster).Error
@@ -7904,8 +7904,8 @@ var _ = Describe("V2UpdateCluster", func() {
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.18",
+							ControlPlaneCount:    3,
 						},
-						ControlPlaneCount: 3,
 					}
 
 					err := db.Create(cluster).Error
@@ -7929,14 +7929,14 @@ var _ = Describe("V2UpdateCluster", func() {
 					Expect(newCluster.ControlPlaneCount).To(BeEquivalentTo(4))
 				})
 
-				It(fmt.Sprintf("descreasing to 3 control planes with OCP >= %s the value and multi-node", common.MinimumVersionForStretchedControlPlanesCluster), func() {
+				It(fmt.Sprintf("descreasing to 3 control planes with OCP >= %s the value and multi-node", common.MinimumVersionForNonStandardHAOCPControlPlane), func() {
 					cluster := &common.Cluster{
 						Cluster: models.Cluster{
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.18",
+							ControlPlaneCount:    4,
 						},
-						ControlPlaneCount: 4,
 					}
 
 					err := db.Create(cluster).Error
@@ -7962,14 +7962,14 @@ var _ = Describe("V2UpdateCluster", func() {
 			})
 
 			Context("should fail", func() {
-				It("update to invalid value, stretched clusters not supported", func() {
+				It("update to invalid value, non-standard HA OCP Control Plane not supported", func() {
 					cluster := &common.Cluster{
 						Cluster: models.Cluster{
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.16",
+							ControlPlaneCount:    3,
 						},
-						ControlPlaneCount: 3,
 					}
 
 					err := db.Create(cluster).Error
@@ -7985,14 +7985,14 @@ var _ = Describe("V2UpdateCluster", func() {
 					verifyApiErrorString(reply, http.StatusBadRequest, "there should be exactly 3 dedicated control plane nodes for high availability mode Full in openshift version older than 4.18")
 				})
 
-				It("update to invalid value, stretched clusters supported", func() {
+				It("update to invalid value, non-standard HA OCP Control Plane supported", func() {
 					cluster := &common.Cluster{
 						Cluster: models.Cluster{
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.18",
+							ControlPlaneCount:    3,
 						},
-						ControlPlaneCount: 3,
 					}
 
 					err := db.Create(cluster).Error
@@ -8014,8 +8014,8 @@ var _ = Describe("V2UpdateCluster", func() {
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
 							OpenshiftVersion:     "4.16",
+							ControlPlaneCount:    1,
 						},
-						ControlPlaneCount: 1,
 					}
 
 					err := db.Create(cluster).Error
@@ -8031,14 +8031,14 @@ var _ = Describe("V2UpdateCluster", func() {
 					verifyApiErrorString(reply, http.StatusBadRequest, "single-node clusters must have a single control plane node")
 				})
 
-				It(fmt.Sprintf("update amount to != 3 when multi-node, OCP version < %s", common.MinimumVersionForStretchedControlPlanesCluster), func() {
+				It(fmt.Sprintf("update amount to != 3 when multi-node, OCP version < %s", common.MinimumVersionForNonStandardHAOCPControlPlane), func() {
 					cluster := &common.Cluster{
 						Cluster: models.Cluster{
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.16",
+							ControlPlaneCount:    3,
 						},
-						ControlPlaneCount: 3,
 					}
 
 					err := db.Create(cluster).Error
@@ -8058,14 +8058,14 @@ var _ = Describe("V2UpdateCluster", func() {
 					)
 				})
 
-				It(fmt.Sprintf("update amount to != 3 when multi-node, OCP version >= %s", common.MinimumVersionForStretchedControlPlanesCluster), func() {
+				It(fmt.Sprintf("update amount to != 3 when multi-node, OCP version >= %s", common.MinimumVersionForNonStandardHAOCPControlPlane), func() {
 					cluster := &common.Cluster{
 						Cluster: models.Cluster{
 							ID:                   &clusterID,
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 							OpenshiftVersion:     "4.18",
+							ControlPlaneCount:    4,
 						},
-						ControlPlaneCount: 4,
 					}
 
 					err := db.Create(cluster).Error
@@ -8784,7 +8784,7 @@ var _ = Describe("infraEnvs", func() {
 			mockInfraEnvRegisterSuccess()
 			mockEvents.EXPECT().SendInfraEnvEvent(ctx, eventstest.NewEventMatcher(
 				eventstest.WithNameMatcher(eventgen.InfraEnvRegisteredEventName))).Times(1)
-			mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(gomock.Any(), "4.8.0-fc.0", "x86_64", "")
+			mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(gomock.Any(), "4.8.0-fc.0", "")
 			mockUsage.EXPECT().Add(gomock.Any(), gomock.Not(usage.StaticNetworkConfigUsage), gomock.Any()).AnyTimes()
 			mockUsage.EXPECT().Remove(gomock.Any(), usage.StaticNetworkConfigUsage).Times(1)
 			mockUsage.EXPECT().Remove(gomock.Any(), gomock.Not(usage.StaticNetworkConfigUsage)).AnyTimes()
@@ -8815,7 +8815,7 @@ var _ = Describe("infraEnvs", func() {
 				eventstest.WithNameMatcher(eventgen.ImageInfoUpdatedEventName))).AnyTimes()
 			mockEvents.EXPECT().SendInfraEnvEvent(ctx, eventstest.NewEventMatcher(
 				eventstest.WithNameMatcher(eventgen.InfraEnvRegisteredEventName))).Times(1)
-			mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(gomock.Any(), "4.8.0-fc.0", "x86_64", "")
+			mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(gomock.Any(), "4.8.0-fc.0", "")
 
 			mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(gomock.Any()).Return("static network format result", nil).Times(1)
 			mockUsage.EXPECT().Add(gomock.Any(), usage.StaticNetworkConfigUsage, nil)
@@ -9496,7 +9496,7 @@ location = "%s"
 					common.FormatStaticConfigHostYAML("0200003ef73c", "02000048ba38", "192.168.126.40", "192.168.141.40", "192.168.126.1", map2),
 					common.FormatStaticConfigHostYAML("0200003ef75c", "02000048ba58", "192.168.126.42", "192.168.141.42", "192.168.126.1", map3),
 				}
-				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "x86_64", "").Return(nil).Times(1)
+				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "").Return(nil).Times(1)
 				mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(staticNetworkConfig).Return(staticNetworkFormatRes, nil).Times(1)
 				reply := bm.UpdateInfraEnv(ctx, installer.UpdateInfraEnvParams{
 					InfraEnvID: *i.ID,
@@ -9533,7 +9533,7 @@ location = "%s"
 					common.FormatStaticConfigHostYAML("0200003ef73c", "02000048ba38", "192.168.126.40", "192.168.141.40", "192.168.126.1", map2),
 					common.FormatStaticConfigHostYAML("0200003ef75c", "02000048ba58", "192.168.126.42", "192.168.141.42", "192.168.126.1", map3),
 				}
-				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "x86_64", "").Return(nil).Times(1)
+				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "").Return(nil).Times(1)
 				mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(staticNetworkConfig).Return(staticNetworkFormatRes, nil).Times(1)
 				reply := bm.UpdateInfraEnv(ctx, installer.UpdateInfraEnvParams{
 					InfraEnvID: *i.ID,
@@ -9563,7 +9563,7 @@ location = "%s"
 				}
 
 				mockInfraEnvUpdateSuccess()
-				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "x86_64", "").Return(nil).Times(1)
+				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "").Return(nil).Times(1)
 				mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(staticNetworkConfig).Return(staticNetworkFormatRes, nil).Times(1)
 				mockUsage.EXPECT().Add(gomock.Any(), usage.StaticNetworkConfigUsage, nil).Times(1)
 				mockUsage.EXPECT().Save(gomock.Any(), *cluster.ID, gomock.Any()).Times(1)
@@ -9590,7 +9590,7 @@ location = "%s"
 				staticNetworkConfig := []*models.HostStaticNetworkConfig{}
 
 				mockInfraEnvUpdateSuccess()
-				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "x86_64", "").Return(nil).Times(1)
+				mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "").Return(nil).Times(1)
 				mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(staticNetworkConfig).Return(staticNetworkFormatRes, nil).Times(1)
 				mockUsage.EXPECT().Remove(gomock.Any(), usage.StaticNetworkConfigUsage).Times(1)
 				mockUsage.EXPECT().Save(gomock.Any(), *cluster.ID, gomock.Any()).Times(1)
@@ -9997,7 +9997,7 @@ location = "%s"
 						common.FormatStaticConfigHostYAML("0200003ef73c", "02000048ba38", "192.168.126.40", "192.168.141.40", "192.168.126.1", map2),
 						common.FormatStaticConfigHostYAML("0200003ef75c", "02000048ba58", "192.168.126.42", "192.168.141.42", "192.168.126.1", map3),
 					}
-					mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "", "").Return(nil).Times(2)
+					mockStaticNetworkConfig.EXPECT().ValidateStaticConfigParamsYAML(staticNetworkConfig, "4.6", "").Return(nil).Times(2)
 					mockStaticNetworkConfig.EXPECT().FormatStaticNetworkConfigForDB(staticNetworkConfig).Return(staticNetworkFormatRes, nil).Times(2)
 					params.StaticNetworkConfig = staticNetworkConfig
 					newURL = updateInfraEnv(params)
@@ -11971,28 +11971,23 @@ var _ = Describe("UpdateClusterInstallConfig", func() {
 		func(version string) {
 			err := db.Model(&common.Cluster{}).Where("id = ?", clusterID).Update("openshift_version", version).Error
 			Expect(err).ToNot(HaveOccurred())
+			override := `{"capabilities": {"baselineCapabilitySet": "None", "additionalEnabledCapabilities": ["baremetal"]}}`
+			//err = db.Model(&common.Cluster{}).Where("id = ?", clusterID).Update("install_config_overrides", override).Error
+			//Expect(err).ToNot(HaveOccurred())
 			operator := &models.MonitoredOperator{
 				ClusterID: clusterID,
 				Name:      "console",
 			}
 			err = db.FirstOrCreate(operator).Error
 			Expect(err).ToNot(HaveOccurred())
-			installConfig := installcfg.InstallerConfigBaremetal{
-				Capabilities: &installcfg.Capabilities{
-					BaselineCapabilitySet: "None",
-					AdditionalEnabledCapabilities: []installcfg.ClusterVersionCapability{
-						"baremetal",
-					},
-				},
-			}
-			installConfigData, err := json.Marshal(installConfig)
-			Expect(err).ToNot(HaveOccurred())
 			mockEvents.EXPECT().SendClusterEvent(gomock.Any(), gomock.Any()).AnyTimes()
 			mockInstallConfigBuilder.EXPECT().ValidateInstallConfigPatch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-			mockInstallConfigBuilder.EXPECT().GetInstallConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(installConfigData, nil).AnyTimes()
+			mockUsage.EXPECT().Add(gomock.Any(), usage.InstallConfigOverrides, gomock.Any()).Times(1)
+			mockUsage.EXPECT().Save(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+			mockUsage.EXPECT().Remove(gomock.Any(), gomock.Any()).Times(0)
 			params := installer.V2UpdateClusterInstallConfigParams{
 				ClusterID:           clusterID,
-				InstallConfigParams: "{}",
+				InstallConfigParams: override,
 			}
 			bm.V2UpdateClusterInstallConfig(ctx, params)
 			err = db.First(&operator).Error
@@ -12008,28 +12003,21 @@ var _ = Describe("UpdateClusterInstallConfig", func() {
 		func(version string) {
 			err := db.Model(&common.Cluster{}).Where("id = ?", clusterID).Update("openshift_version", version).Error
 			Expect(err).ToNot(HaveOccurred())
+			override := `{"capabilities": {"baselineCapabilitySet": "None", "additionalEnabledCapabilities": ["console"]}}`
 			operator := &models.MonitoredOperator{
 				ClusterID: clusterID,
 				Name:      "console",
 			}
 			err = db.FirstOrCreate(operator).Error
 			Expect(err).ToNot(HaveOccurred())
-			installConfig := installcfg.InstallerConfigBaremetal{
-				Capabilities: &installcfg.Capabilities{
-					BaselineCapabilitySet: "None",
-					AdditionalEnabledCapabilities: []installcfg.ClusterVersionCapability{
-						"baremetal",
-					},
-				},
-			}
-			installConfigData, err := json.Marshal(installConfig)
-			Expect(err).ToNot(HaveOccurred())
 			mockEvents.EXPECT().SendClusterEvent(gomock.Any(), gomock.Any()).AnyTimes()
 			mockInstallConfigBuilder.EXPECT().ValidateInstallConfigPatch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-			mockInstallConfigBuilder.EXPECT().GetInstallConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(installConfigData, nil).AnyTimes()
+			mockUsage.EXPECT().Add(gomock.Any(), usage.InstallConfigOverrides, gomock.Any()).Times(1)
+			mockUsage.EXPECT().Save(gomock.Any(), gomock.Any(), gomock.Any()).Times(1)
+			mockUsage.EXPECT().Remove(gomock.Any(), gomock.Any()).Times(0)
 			params := installer.V2UpdateClusterInstallConfigParams{
 				ClusterID:           clusterID,
-				InstallConfigParams: "{}",
+				InstallConfigParams: override,
 			}
 			bm.V2UpdateClusterInstallConfig(ctx, params)
 			err = db.First(&operator).Error
@@ -12041,7 +12029,10 @@ var _ = Describe("UpdateClusterInstallConfig", func() {
 	)
 
 	It("Adds the console from the list of monitored operators", func() {
+		override := `{"capabilities": {"baselineCapabilitySet": "None", "additionalEnabledCapabilities": ["console"]}}`
 		err := db.Model(&common.Cluster{}).Where("id = ?", clusterID).Update("openshift_version", "4.12.7").Error
+		Expect(err).ToNot(HaveOccurred())
+		err = db.Model(&common.Cluster{}).Where("id = ?", clusterID).Update("install_config_overrides", override).Error
 		Expect(err).ToNot(HaveOccurred())
 		operator := &models.MonitoredOperator{
 			ClusterID: clusterID,
@@ -12049,22 +12040,11 @@ var _ = Describe("UpdateClusterInstallConfig", func() {
 		}
 		err = db.Delete(operator).Error
 		Expect(err).ToNot(HaveOccurred())
-		installConfig := installcfg.InstallerConfigBaremetal{
-			Capabilities: &installcfg.Capabilities{
-				BaselineCapabilitySet: "None",
-				AdditionalEnabledCapabilities: []installcfg.ClusterVersionCapability{
-					"Console",
-				},
-			},
-		}
-		installConfigData, err := json.Marshal(installConfig)
-		Expect(err).ToNot(HaveOccurred())
 		mockEvents.EXPECT().SendClusterEvent(gomock.Any(), gomock.Any()).AnyTimes()
 		mockInstallConfigBuilder.EXPECT().ValidateInstallConfigPatch(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-		mockInstallConfigBuilder.EXPECT().GetInstallConfig(gomock.Any(), gomock.Any(), gomock.Any()).Return(installConfigData, nil).AnyTimes()
 		params := installer.V2UpdateClusterInstallConfigParams{
 			ClusterID:           clusterID,
-			InstallConfigParams: "{}",
+			InstallConfigParams: "",
 		}
 		bm.V2UpdateClusterInstallConfig(ctx, params)
 		err = db.First(&operator).Error
@@ -15650,11 +15630,11 @@ location = "%s"
 
 			Context("using defaults", func() {
 				It("high_availability mode is set to Full", func() {
-					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 					reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 						NewClusterParams: &models.ClusterCreateParams{
-							OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+							OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 						},
 					})
@@ -15670,11 +15650,11 @@ location = "%s"
 				})
 
 				It("high_availability mode is set to None", func() {
-					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 					reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 						NewClusterParams: &models.ClusterCreateParams{
-							OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+							OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 							HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
 						},
 					})
@@ -15690,11 +15670,11 @@ location = "%s"
 				})
 
 				It("control_plane_count is set to 3", func() {
-					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 					reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 						NewClusterParams: &models.ClusterCreateParams{
-							OpenshiftVersion:  swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+							OpenshiftVersion:  swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 							ControlPlaneCount: swag.Int64(3),
 						},
 					})
@@ -15710,11 +15690,11 @@ location = "%s"
 				})
 
 				It("control_plane_count is set to 1", func() {
-					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 					reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 						NewClusterParams: &models.ClusterCreateParams{
-							OpenshiftVersion:  swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+							OpenshiftVersion:  swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 							ControlPlaneCount: swag.Int64(1),
 						},
 					})
@@ -15730,11 +15710,11 @@ location = "%s"
 				})
 
 				It("not set", func() {
-					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+					mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 					reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 						NewClusterParams: &models.ClusterCreateParams{
-							OpenshiftVersion: swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+							OpenshiftVersion: swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						},
 					})
 
@@ -15750,12 +15730,12 @@ location = "%s"
 				})
 			})
 
-			It(fmt.Sprintf("setting 5 control planes, multi-node with OCP version >= %s", common.MinimumVersionForStretchedControlPlanesCluster), func() {
-				mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, common.MinimumVersionForStretchedControlPlanesCluster)
+			It(fmt.Sprintf("setting 5 control planes, multi-node with OCP version >= %s", common.MinimumVersionForNonStandardHAOCPControlPlane), func() {
+				mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, common.MinimumVersionForNonStandardHAOCPControlPlane)
 
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(common.MinimumVersionForStretchedControlPlanesCluster),
+						OpenshiftVersion:     swag.String(common.MinimumVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(5),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 					},
@@ -15773,11 +15753,11 @@ location = "%s"
 			})
 
 			It("setting 1 control plane, single-node", func() {
-				mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStretchedClusters)
+				mockClusterRegisterSuccessWithVersion(common.X86CPUArchitecture, testutils.ValidOCPVersionForNonStandardHAOCPControlPlane)
 
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(1),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
 					},
@@ -15796,10 +15776,10 @@ location = "%s"
 		})
 
 		Context("should fail", func() {
-			It("setting 6 control planes, multi-node, stretched clusters not supported", func() {
+			It("setting 6 control planes, multi-node, non-standard HA OCP Control Plane not supported", func() {
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(6),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 					},
@@ -15812,10 +15792,10 @@ location = "%s"
 				)
 			})
 
-			It("setting 6 control planes, multi-node, stretched clusters supported", func() {
+			It("setting 6 control planes, multi-node, non-standard HA OCP Control Plane supported", func() {
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(common.MinimumVersionForStretchedControlPlanesCluster),
+						OpenshiftVersion:     swag.String(common.MinimumVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(6),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 					},
@@ -15831,7 +15811,7 @@ location = "%s"
 			It("setting 3 control planes, single-node", func() {
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(3),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeNone),
 					},
@@ -15847,7 +15827,7 @@ location = "%s"
 			It("setting 1 control plane, mutli-node", func() {
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(1),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 					},
@@ -15860,10 +15840,10 @@ location = "%s"
 				)
 			})
 
-			It("setting 4 control planes, multi-node, stretched clusters not supported", func() {
+			It("setting 4 control planes, multi-node, non-standard HA OCP Control Plane not supported", func() {
 				reply := bm.V2RegisterCluster(ctx, installer.V2RegisterClusterParams{
 					NewClusterParams: &models.ClusterCreateParams{
-						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStretchedClusters),
+						OpenshiftVersion:     swag.String(testutils.ValidOCPVersionForNonStandardHAOCPControlPlane),
 						ControlPlaneCount:    swag.Int64(4),
 						HighAvailabilityMode: swag.String(models.ClusterCreateParamsHighAvailabilityModeFull),
 					},

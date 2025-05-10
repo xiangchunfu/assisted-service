@@ -35,6 +35,7 @@ const (
 	AreLvmRequirementsSatisfied                    = validationID(models.HostValidationIDLvmRequirementsSatisfied)
 	AreMceRequirementsSatisfied                    = validationID(models.HostValidationIDMceRequirementsSatisfied)
 	AreMtvRequirementsSatisfied                    = validationID(models.HostValidationIDMtvRequirementsSatisfied)
+	AreOscRequirementsSatisfied                    = validationID(models.HostValidationIDOscRequirementsSatisfied)
 	SufficientOrUnknownInstallationDiskSpeed       = validationID(models.HostValidationIDSufficientInstallationDiskSpeed)
 	HasSufficientNetworkLatencyRequirementForRole  = validationID(models.HostValidationIDSufficientNetworkLatencyRequirementForRole)
 	HasSufficientPacketLossRequirementForRole      = validationID(models.HostValidationIDSufficientPacketLossRequirementForRole)
@@ -59,6 +60,8 @@ const (
 	AreServiceMeshRequirementsSatisfied            = validationID(models.HostValidationIDServicemeshRequirementsSatisfied)
 	AreServerLessRequirementsSatisfied             = validationID(models.HostValidationIDServerlessRequirementsSatisfied)
 	AreOpenShiftAIRequirementsSatisfied            = validationID(models.HostValidationIDOpenshiftAiRequirementsSatisfied)
+	AreAuthorinoRequirementsSatisfied              = validationID(models.HostValidationIDAuthorinoRequirementsSatisfied)
+	IsMtuValid                                     = validationID(models.HostValidationIDMtuValid)
 )
 
 func (v validationID) category() (string, error) {
@@ -83,6 +86,7 @@ func (v validationID) category() (string, error) {
 		NonOverlappingSubnets,
 		IsReleaseDomainNameResolvedCorrectly,
 		NoIPCollisionsInNetwork,
+		IsMtuValid,
 		NoIscsiNicBelongsToMachineCidr:
 		return "network", nil
 	case HasInventory,
@@ -112,7 +116,9 @@ func (v validationID) category() (string, error) {
 		ArePipelinesRequirementsSatisfied,
 		AreServiceMeshRequirementsSatisfied,
 		AreServerLessRequirementsSatisfied,
-		AreOpenShiftAIRequirementsSatisfied:
+		AreOpenShiftAIRequirementsSatisfied,
+		AreAuthorinoRequirementsSatisfied,
+		AreOscRequirementsSatisfied:
 		return "operators", nil
 	}
 	return "", common.NewApiError(http.StatusInternalServerError, errors.Errorf("Unexpected validation id %s", string(v)))

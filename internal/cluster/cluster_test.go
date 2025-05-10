@@ -96,12 +96,14 @@ var _ = Describe("stateMachine", func() {
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDLvmRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDMceRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDMtvRequirementsSatisfied)},
+				{Status: api.Success, ValidationId: string(models.ClusterValidationIDOscRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDPipelinesRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 				{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+				{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 			}, nil)
 		})
 
@@ -170,12 +172,14 @@ var _ = Describe("TestClusterMonitoring", func() {
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDLvmRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMceRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMtvRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOscRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDPipelinesRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 		}, nil)
 	})
 
@@ -196,7 +200,7 @@ var _ = Describe("TestClusterMonitoring", func() {
 					PullSecretSet:      true,
 					MonitoredOperators: []*models.MonitoredOperator{&common.TestDefaultConfig.MonitoredOperator},
 					StatusUpdatedAt:    strfmt.DateTime(time.Now()),
-					OpenshiftVersion:   testing.ValidOCPVersionForNonStretchedClusters,
+					OpenshiftVersion:   testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
 				},
 				TriggerMonitorTimestamp: time.Now(),
 			}
@@ -457,18 +461,19 @@ var _ = Describe("TestClusterMonitoring", func() {
 
 					c = common.Cluster{
 						Cluster: models.Cluster{
-							ID:               &id,
-							Status:           swag.String("insufficient"),
-							ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-							ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-							MachineNetworks:  common.TestIPv4Networking.MachineNetworks,
-							APIVips:          common.TestIPv4Networking.APIVips,
-							IngressVips:      common.TestIPv4Networking.IngressVips,
-							BaseDNSDomain:    "test.com",
-							PullSecretSet:    true,
-							StatusInfo:       swag.String(StatusInfoInsufficient),
-							NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-							OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
+							ID:                &id,
+							Status:            swag.String("insufficient"),
+							ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+							ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+							MachineNetworks:   common.TestIPv4Networking.MachineNetworks,
+							APIVips:           common.TestIPv4Networking.APIVips,
+							IngressVips:       common.TestIPv4Networking.IngressVips,
+							BaseDNSDomain:     "test.com",
+							PullSecretSet:     true,
+							StatusInfo:        swag.String(StatusInfoInsufficient),
+							NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+							OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+							ControlPlaneCount: 3,
 						},
 						TriggerMonitorTimestamp: time.Now(),
 					}
@@ -545,18 +550,19 @@ var _ = Describe("TestClusterMonitoring", func() {
 				BeforeEach(func() {
 					c = common.Cluster{
 						Cluster: models.Cluster{
-							ID:               &id,
-							Status:           swag.String(models.ClusterStatusReady),
-							StatusInfo:       swag.String(StatusInfoReady),
-							ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-							ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-							MachineNetworks:  common.TestIPv4Networking.MachineNetworks,
-							APIVips:          common.TestIPv4Networking.APIVips,
-							IngressVips:      common.TestIPv4Networking.IngressVips,
-							BaseDNSDomain:    "test.com",
-							PullSecretSet:    true,
-							NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-							OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
+							ID:                &id,
+							Status:            swag.String(models.ClusterStatusReady),
+							StatusInfo:        swag.String(StatusInfoReady),
+							ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+							ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+							MachineNetworks:   common.TestIPv4Networking.MachineNetworks,
+							APIVips:           common.TestIPv4Networking.APIVips,
+							IngressVips:       common.TestIPv4Networking.IngressVips,
+							BaseDNSDomain:     "test.com",
+							PullSecretSet:     true,
+							NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+							OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+							ControlPlaneCount: 3,
 						},
 						TriggerMonitorTimestamp: time.Now(),
 					}
@@ -768,12 +774,14 @@ var _ = Describe("lease timeout event", func() {
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDLvmRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMceRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMtvRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOscRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDPipelinesRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 		}, nil)
 	})
 
@@ -891,12 +899,14 @@ var _ = Describe("Auto assign machine CIDR", func() {
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDLvmRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMceRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMtvRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOscRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDPipelinesRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 		}, nil)
 	})
 
@@ -2253,19 +2263,21 @@ var _ = Describe("Majority groups", func() {
 		apiVip := "1.2.3.5"
 		ingressVip := "1.2.3.6"
 		verificationSuccess := models.VipVerificationSucceeded
-		cluster = common.Cluster{Cluster: models.Cluster{
-			ID:               &id,
-			Status:           swag.String(models.ClusterStatusReady),
-			ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-			ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-			MachineNetworks:  common.TestIPv4Networking.MachineNetworks,
-			APIVips:          []*models.APIVip{{IP: models.IP(apiVip), ClusterID: id, Verification: &verificationSuccess}},
-			IngressVips:      []*models.IngressVip{{IP: models.IP(ingressVip), ClusterID: id, Verification: &verificationSuccess}},
-			BaseDNSDomain:    "test.com",
-			PullSecretSet:    true,
-			NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-			OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
-		}}
+		cluster = common.Cluster{
+			Cluster: models.Cluster{
+				ID:                &id,
+				Status:            swag.String(models.ClusterStatusReady),
+				ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+				ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+				MachineNetworks:   common.TestIPv4Networking.MachineNetworks,
+				APIVips:           []*models.APIVip{{IP: models.IP(apiVip), ClusterID: id, Verification: &verificationSuccess}},
+				IngressVips:       []*models.IngressVip{{IP: models.IP(ingressVip), ClusterID: id, Verification: &verificationSuccess}},
+				BaseDNSDomain:     "test.com",
+				PullSecretSet:     true,
+				NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+				OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+				ControlPlaneCount: 3,
+			}}
 		Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
 
 		mockMetricApi.EXPECT().MonitoredClusterCount(int64(1)).AnyTimes()
@@ -2282,6 +2294,7 @@ var _ = Describe("Majority groups", func() {
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 		}, nil)
 	})
 
@@ -2572,19 +2585,21 @@ var _ = Describe("ready_state", func() {
 		id = strfmt.UUID(uuid.New().String())
 		apiVip := "1.2.3.5"
 		ingressVip := "1.2.3.6"
-		cluster = common.Cluster{Cluster: models.Cluster{
-			ID:               &id,
-			Status:           swag.String(models.ClusterStatusReady),
-			ClusterNetworks:  common.TestIPv4Networking.ClusterNetworks,
-			ServiceNetworks:  common.TestIPv4Networking.ServiceNetworks,
-			MachineNetworks:  common.TestIPv4Networking.MachineNetworks,
-			APIVips:          []*models.APIVip{{IP: models.IP(apiVip), ClusterID: id, Verification: common.VipVerificationPtr(models.VipVerificationSucceeded)}},
-			IngressVips:      []*models.IngressVip{{IP: models.IP(ingressVip), ClusterID: id, Verification: common.VipVerificationPtr(models.VipVerificationSucceeded)}},
-			BaseDNSDomain:    "test.com",
-			PullSecretSet:    true,
-			NetworkType:      swag.String(models.ClusterNetworkTypeOVNKubernetes),
-			OpenshiftVersion: testing.ValidOCPVersionForNonStretchedClusters,
-		}}
+		cluster = common.Cluster{
+			Cluster: models.Cluster{
+				ID:                &id,
+				Status:            swag.String(models.ClusterStatusReady),
+				ClusterNetworks:   common.TestIPv4Networking.ClusterNetworks,
+				ServiceNetworks:   common.TestIPv4Networking.ServiceNetworks,
+				MachineNetworks:   common.TestIPv4Networking.MachineNetworks,
+				APIVips:           []*models.APIVip{{IP: models.IP(apiVip), ClusterID: id, Verification: common.VipVerificationPtr(models.VipVerificationSucceeded)}},
+				IngressVips:       []*models.IngressVip{{IP: models.IP(ingressVip), ClusterID: id, Verification: common.VipVerificationPtr(models.VipVerificationSucceeded)}},
+				BaseDNSDomain:     "test.com",
+				PullSecretSet:     true,
+				NetworkType:       swag.String(models.ClusterNetworkTypeOVNKubernetes),
+				OpenshiftVersion:  testing.ValidOCPVersionForNonStandardHAOCPControlPlane,
+				ControlPlaneCount: 3,
+			}}
 		Expect(db.Create(&cluster).Error).ShouldNot(HaveOccurred())
 		addInstallationRequirements(id, db)
 
@@ -2602,12 +2617,14 @@ var _ = Describe("ready_state", func() {
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDLvmRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMceRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDMtvRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOscRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNodeFeatureDiscoveryRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDNvidiaGpuRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDPipelinesRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServicemeshRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDServerlessRequirementsSatisfied)},
 			{Status: api.Success, ValidationId: string(models.ClusterValidationIDOpenshiftAiRequirementsSatisfied)},
+			{Status: api.Success, ValidationId: string(models.ClusterValidationIDAuthorinoRequirementsSatisfied)},
 		}, nil)
 	})
 

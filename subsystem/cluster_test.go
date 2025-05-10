@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/assisted-service/internal/host/hostutil"
 	"github.com/openshift/assisted-service/internal/network"
 	"github.com/openshift/assisted-service/internal/operators"
+	"github.com/openshift/assisted-service/internal/operators/authorino"
 	"github.com/openshift/assisted-service/internal/operators/cnv"
 	"github.com/openshift/assisted-service/internal/operators/lso"
 	"github.com/openshift/assisted-service/internal/operators/lvm"
@@ -40,6 +41,7 @@ import (
 	"github.com/openshift/assisted-service/internal/operators/nvidiagpu"
 	"github.com/openshift/assisted-service/internal/operators/odf"
 	"github.com/openshift/assisted-service/internal/operators/openshiftai"
+	"github.com/openshift/assisted-service/internal/operators/osc"
 	"github.com/openshift/assisted-service/internal/operators/pipelines"
 	"github.com/openshift/assisted-service/internal/operators/serverless"
 	"github.com/openshift/assisted-service/internal/operators/servicemesh"
@@ -3739,6 +3741,10 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 			CPUCores: mtv.MasterCPU,
 			RAMMib:   conversions.GibToMib(mtv.MasterMemory),
 		}
+		masterOSCRequirements = models.ClusterHostRequirementsDetails{
+			CPUCores: osc.MasterCPU,
+			RAMMib:   conversions.GibToMib(osc.MasterMemory),
+		}
 		workerOpenShiftAIRequirements = models.ClusterHostRequirementsDetails{
 			CPUCores: 8,
 			RAMMib:   conversions.GibToMib(32),
@@ -3770,7 +3776,7 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 			},
 		}
 		Expect(*requirements.Ocp).To(BeEquivalentTo(expectedOcpRequirements))
-		Expect(requirements.Operators).To(HaveLen(12))
+		Expect(requirements.Operators).To(HaveLen(14))
 		for _, op := range requirements.Operators {
 			switch op.OperatorName {
 			case lso.Operator.Name:
@@ -3790,6 +3796,9 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 					fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, masterMTVRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Master.Quantitative.CPUCores, op.Requirements.Master.Quantitative.RAMMib, masterMTVRequirements.CPUCores, masterMTVRequirements.RAMMib))
 				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(workerMTVRequirements),
 					fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, workerMTVRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Worker.Quantitative.CPUCores, op.Requirements.Worker.Quantitative.RAMMib, workerMTVRequirements.CPUCores, workerMTVRequirements.RAMMib))
+			case osc.Operator.Name:
+				Expect(*op.Requirements.Master.Quantitative).To(BeEquivalentTo(masterOSCRequirements),
+					fmt.Sprintf("expected: CPUCores: %d,RAMMib: %d, masterOSCRequirements: CPUCores: %d,RAMMib: %d", op.Requirements.Master.Quantitative.CPUCores, op.Requirements.Master.Quantitative.RAMMib, masterOSCRequirements.CPUCores, masterOSCRequirements.RAMMib))
 			case nodefeaturediscovery.Operator.Name:
 				continue
 			case nvidiagpu.Operator.Name:
@@ -3804,6 +3813,8 @@ var _ = Describe("Preflight Cluster Requirements", func() {
 				Expect(*op.Requirements.Worker.Quantitative).To(BeEquivalentTo(workerOpenShiftAIRequirements))
 			case lvm.Operator.Name:
 				continue // lvm operator is tested separately
+			case authorino.Operator.Name:
+				continue
 			default:
 				Fail("Unexpected operator")
 			}
@@ -5171,7 +5182,7 @@ var _ = Describe("Verify install-config manifest", func() {
 	)
 })
 
-var _ = Describe("Verify role assignment for stretched control plane cluster", func() {
+var _ = Describe("Verify role assignment for non-standard HA OCP Control Plane cluster", func() {
 	var ctx = context.TODO()
 
 	It("with 4 masters, 1 worker", func() {
@@ -5179,7 +5190,7 @@ var _ = Describe("Verify role assignment for stretched control plane cluster", f
 			Context: ctx,
 			NewClusterParams: &models.ClusterCreateParams{
 				Name:              swag.String("test-cluster"),
-				OpenshiftVersion:  swag.String(common.MinimumVersionForStretchedControlPlanesCluster),
+				OpenshiftVersion:  swag.String(common.MinimumVersionForNonStandardHAOCPControlPlane),
 				PullSecret:        swag.String(pullSecret),
 				ControlPlaneCount: swag.Int64(4),
 			},

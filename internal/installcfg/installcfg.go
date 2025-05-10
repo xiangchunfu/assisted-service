@@ -42,6 +42,7 @@ type BareMetalInstallConfigPlatform struct {
 	ProvisioningNetworkInterface string   `json:"provisioningNetworkInterface,omitempty"`
 	ProvisioningNetworkCIDR      *string  `json:"provisioningNetworkCIDR,omitempty"`
 	ProvisioningDHCPRange        string   `json:"provisioningDHCPRange,omitempty"`
+	AdditionalNTPServers         []string `json:"additionalNTPServers,omitempty"`
 }
 
 type VsphereFailureDomainTopology struct {
@@ -195,13 +196,9 @@ type MachineNetwork struct {
 	Cidr string `json:"cidr"`
 }
 
-type ClusterVersionCapabilitySet string
-
-type ClusterVersionCapability string
-
 type Capabilities struct {
-	BaselineCapabilitySet         ClusterVersionCapabilitySet `json:"baselineCapabilitySet,omitempty"`
-	AdditionalEnabledCapabilities []ClusterVersionCapability  `json:"additionalEnabledCapabilities,omitempty"`
+	BaselineCapabilitySet         configv1.ClusterVersionCapabilitySet `json:"baselineCapabilitySet,omitempty"`
+	AdditionalEnabledCapabilities []configv1.ClusterVersionCapability  `json:"additionalEnabledCapabilities,omitempty"`
 }
 
 type CPUPartitioningMode string

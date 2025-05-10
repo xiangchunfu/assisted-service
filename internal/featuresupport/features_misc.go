@@ -47,6 +47,7 @@ func (feature *SnoFeature) getIncompatibleFeatures(string) *[]models.FeatureSupp
 		models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 		models.FeatureSupportLevelIDCLUSTERMANAGEDNETWORKING,
 		models.FeatureSupportLevelIDVIPAUTOALLOC,
+		models.FeatureSupportLevelIDOPENSHIFTAI,
 	}
 }
 
@@ -299,4 +300,61 @@ func (f *skipMcoReboot) getFeatureActiveLevel(cluster *common.Cluster, infraEnv 
 		}
 	}
 	return activeLevelActive
+}
+
+// Non-standard HA OCP Control Plane
+type NonStandardHAControlPlane struct{}
+
+func (f *NonStandardHAControlPlane) New() SupportLevelFeature {
+	return &NonStandardHAControlPlane{}
+}
+
+func (f *NonStandardHAControlPlane) getId() models.FeatureSupportLevelID {
+	return models.FeatureSupportLevelIDNONSTANDARDHACONTROLPLANE
+}
+
+func (f *NonStandardHAControlPlane) GetName() string {
+	return "Non-standard HA OCP Control Plane"
+}
+
+func (f *NonStandardHAControlPlane) getSupportLevel(filters SupportLevelFilters) models.SupportLevel {
+	supported, err := common.BaseVersionGreaterOrEqual(common.MinimumVersionForNonStandardHAOCPControlPlane, filters.OpenshiftVersion)
+	if !supported || err != nil {
+		return models.SupportLevelUnavailable
+	}
+
+	if filters.PlatformType != nil &&
+		(*filters.PlatformType != models.PlatformTypeBaremetal && *filters.PlatformType != models.PlatformTypeNone) {
+		return models.SupportLevelUnavailable
+	}
+
+	return models.SupportLevelSupported
+}
+
+func (f *NonStandardHAControlPlane) getIncompatibleFeatures(openshiftVersion string) *[]models.FeatureSupportLevelID {
+	return &[]models.FeatureSupportLevelID{
+		// only baremetal platform is supported
+		models.FeatureSupportLevelIDEXTERNALPLATFORM,
+		models.FeatureSupportLevelIDNUTANIXINTEGRATION,
+		models.FeatureSupportLevelIDVSPHEREINTEGRATION,
+		models.FeatureSupportLevelIDEXTERNALPLATFORMOCI,
+	}
+}
+
+func (f *NonStandardHAControlPlane) getIncompatibleArchitectures(openshiftVersion *string) *[]models.ArchitectureSupportLevelID {
+	return &[]models.ArchitectureSupportLevelID{
+		models.ArchitectureSupportLevelIDARM64ARCHITECTURE,
+		models.ArchitectureSupportLevelIDS390XARCHITECTURE,
+		models.ArchitectureSupportLevelIDPPC64LEARCHITECTURE,
+		models.ArchitectureSupportLevelIDMULTIARCHRELEASEIMAGE,
+	}
+}
+
+func (f *NonStandardHAControlPlane) getFeatureActiveLevel(cluster *common.Cluster, infraEnv *models.InfraEnv,
+	clusterUpdateParams *models.V2ClusterUpdateParams, infraenvUpdateParams *models.InfraEnvUpdateParams) featureActiveLevel {
+	if cluster != nil && cluster.ControlPlaneCount > 3 {
+		return activeLevelActive
+	}
+
+	return activeLevelNotActive
 }

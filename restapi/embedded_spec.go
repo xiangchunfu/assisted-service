@@ -6209,6 +6209,10 @@ func init() {
           "type": "string",
           "x-go-custom-tag": "gorm:\"type:text\""
         },
+        "control_plane_count": {
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
+          "type": "integer"
+        },
         "controller_logs_collected_at": {
           "type": "string",
           "format": "date-time",
@@ -6627,7 +6631,7 @@ func init() {
           "x-nullable": true
         },
         "control_plane_count": {
-          "description": "The amount of control planes which should be part of the cluster.",
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
           "type": "integer",
           "x-nullable": true
         },
@@ -6650,7 +6654,7 @@ func init() {
           "$ref": "#/definitions/disk-encryption"
         },
         "high_availability_mode": {
-          "description": "Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster\nover multiple master nodes whereas 'None' installs a full cluster over one node.\n",
+          "description": "(DEPRECATED) Please use 'control_plane_count' instead. Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster\nover multiple master nodes whereas 'None' installs a full cluster over one node.\n",
           "type": "string",
           "default": "Full",
           "enum": [
@@ -6920,6 +6924,7 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+        "osc-requirements-satisfied",
         "network-type-valid",
         "platform-requirements-satisfied",
         "node-feature-discovery-requirements-satisfied",
@@ -6927,7 +6932,8 @@ func init() {
         "pipelines-requirements-satisfied",
         "servicemesh-requirements-satisfied",
         "serverless-requirements-satisfied",
-        "openshift-ai-requirements-satisfied"
+        "openshift-ai-requirements-satisfied",
+        "authorino-requirements-satisfied"
       ]
     },
     "cluster_default_config": {
@@ -7755,6 +7761,7 @@ func init() {
         "CNV",
         "MCE",
         "MTV",
+        "OSC",
         "NUTANIX_INTEGRATION",
         "BAREMETAL_PLATFORM",
         "NONE_PLATFORM",
@@ -7776,7 +7783,9 @@ func init() {
         "PIPELINES",
         "SERVICEMESH",
         "SERVERLESS",
-        "OPENSHIFT_AI"
+        "OPENSHIFT_AI",
+        "NON_STANDARD_HA_CONTROL_PLANE",
+        "AUTHORINO"
       ]
     },
     "finalizing-stage": {
@@ -8375,6 +8384,7 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+        "osc-requirements-satisfied",
         "sufficient-installation-disk-speed",
         "cnv-requirements-satisfied",
         "sufficient-network-latency-requirement-for-role",
@@ -8399,7 +8409,9 @@ func init() {
         "pipelines-requirements-satisfied",
         "servicemesh-requirements-satisfied",
         "serverless-requirements-satisfied",
-        "openshift-ai-requirements-satisfied"
+        "openshift-ai-requirements-satisfied",
+        "authorino-requirements-satisfied",
+        "mtu-valid"
       ]
     },
     "host_network": {
@@ -10502,7 +10514,7 @@ func init() {
           "x-nullable": true
         },
         "control_plane_count": {
-          "description": "The amount of control planes which should be part of the cluster.",
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
           "type": "integer",
           "x-nullable": true
         },
@@ -17115,6 +17127,10 @@ func init() {
           "type": "string",
           "x-go-custom-tag": "gorm:\"type:text\""
         },
+        "control_plane_count": {
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
+          "type": "integer"
+        },
         "controller_logs_collected_at": {
           "type": "string",
           "format": "date-time",
@@ -17533,7 +17549,7 @@ func init() {
           "x-nullable": true
         },
         "control_plane_count": {
-          "description": "The amount of control planes which should be part of the cluster.",
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
           "type": "integer",
           "x-nullable": true
         },
@@ -17556,7 +17572,7 @@ func init() {
           "$ref": "#/definitions/disk-encryption"
         },
         "high_availability_mode": {
-          "description": "Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster\nover multiple master nodes whereas 'None' installs a full cluster over one node.\n",
+          "description": "(DEPRECATED) Please use 'control_plane_count' instead. Guaranteed availability of the installed cluster. 'Full' installs a Highly-Available cluster\nover multiple master nodes whereas 'None' installs a full cluster over one node.\n",
           "type": "string",
           "default": "Full",
           "enum": [
@@ -17826,6 +17842,7 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+        "osc-requirements-satisfied",
         "network-type-valid",
         "platform-requirements-satisfied",
         "node-feature-discovery-requirements-satisfied",
@@ -17833,7 +17850,8 @@ func init() {
         "pipelines-requirements-satisfied",
         "servicemesh-requirements-satisfied",
         "serverless-requirements-satisfied",
-        "openshift-ai-requirements-satisfied"
+        "openshift-ai-requirements-satisfied",
+        "authorino-requirements-satisfied"
       ]
     },
     "cluster_default_config": {
@@ -18628,6 +18646,7 @@ func init() {
         "CNV",
         "MCE",
         "MTV",
+        "OSC",
         "NUTANIX_INTEGRATION",
         "BAREMETAL_PLATFORM",
         "NONE_PLATFORM",
@@ -18649,7 +18668,9 @@ func init() {
         "PIPELINES",
         "SERVICEMESH",
         "SERVERLESS",
-        "OPENSHIFT_AI"
+        "OPENSHIFT_AI",
+        "NON_STANDARD_HA_CONTROL_PLANE",
+        "AUTHORINO"
       ]
     },
     "finalizing-stage": {
@@ -19248,6 +19269,7 @@ func init() {
         "lvm-requirements-satisfied",
         "mce-requirements-satisfied",
         "mtv-requirements-satisfied",
+        "osc-requirements-satisfied",
         "sufficient-installation-disk-speed",
         "cnv-requirements-satisfied",
         "sufficient-network-latency-requirement-for-role",
@@ -19272,7 +19294,9 @@ func init() {
         "pipelines-requirements-satisfied",
         "servicemesh-requirements-satisfied",
         "serverless-requirements-satisfied",
-        "openshift-ai-requirements-satisfied"
+        "openshift-ai-requirements-satisfied",
+        "authorino-requirements-satisfied",
+        "mtu-valid"
       ]
     },
     "host_network": {
@@ -21340,7 +21364,7 @@ func init() {
           "x-nullable": true
         },
         "control_plane_count": {
-          "description": "The amount of control planes which should be part of the cluster.",
+          "description": "Specifies the required number of control plane nodes that should be part of the cluster.",
           "type": "integer",
           "x-nullable": true
         },

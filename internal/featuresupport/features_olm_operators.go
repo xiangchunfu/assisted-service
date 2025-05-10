@@ -84,6 +84,7 @@ func (feature *LvmFeature) getIncompatibleFeatures(OCPVersion string) *[]models.
 		models.FeatureSupportLevelIDNUTANIXINTEGRATION,
 		models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 		models.FeatureSupportLevelIDODF,
+		models.FeatureSupportLevelIDOPENSHIFTAI,
 	}
 	if isEqual, _ := common.BaseVersionLessThan("4.15", OCPVersion); isEqual {
 		incompatibleFeatures = append(incompatibleFeatures,
@@ -581,11 +582,106 @@ func (f *OpenShiftAIFeature) getIncompatibleArchitectures(_ *string) *[]models.A
 }
 
 func (f *OpenShiftAIFeature) getIncompatibleFeatures(string) *[]models.FeatureSupportLevelID {
-	return &[]models.FeatureSupportLevelID{}
+	return &[]models.FeatureSupportLevelID{
+		// These aren't directly incompatible with OpenShift AI, rather with ODF, but the feature support
+		// mechanism doesn't currently understand operator dependencies, so we need to add these explicitly.
+		models.FeatureSupportLevelIDLVM,
+		models.FeatureSupportLevelIDSNO,
+	}
 }
 
 func (f *OpenShiftAIFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *models.InfraEnv, clusterUpdateParams *models.V2ClusterUpdateParams, _ *models.InfraEnvUpdateParams) featureActiveLevel {
 	if isOperatorActivated("openshift-ai", cluster, clusterUpdateParams) {
+		return activeLevelActive
+	}
+	return activeLevelNotActive
+}
+
+// AuthorinoFeature describes the support for the Authorino operator.
+type AuthorinoFeature struct{}
+
+func (f *AuthorinoFeature) New() SupportLevelFeature {
+	return &AuthorinoFeature{}
+}
+
+func (f *AuthorinoFeature) getId() models.FeatureSupportLevelID {
+	return models.FeatureSupportLevelIDAUTHORINO
+}
+
+func (f *AuthorinoFeature) GetName() string {
+	return "Authorino"
+}
+
+func (f *AuthorinoFeature) getSupportLevel(filters SupportLevelFilters) models.SupportLevel {
+	return models.SupportLevelDevPreview
+}
+
+func (f *AuthorinoFeature) getIncompatibleArchitectures(_ *string) *[]models.ArchitectureSupportLevelID {
+	return &[]models.ArchitectureSupportLevelID{
+		models.ArchitectureSupportLevelIDARM64ARCHITECTURE,
+	}
+}
+
+func (f *AuthorinoFeature) getIncompatibleFeatures(string) *[]models.FeatureSupportLevelID {
+	return nil
+}
+
+func (f *AuthorinoFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *models.InfraEnv, clusterUpdateParams *models.V2ClusterUpdateParams, _ *models.InfraEnvUpdateParams) featureActiveLevel {
+	if isOperatorActivated("authorino", cluster, clusterUpdateParams) {
+		return activeLevelActive
+	}
+	return activeLevelNotActive
+}
+
+// OscFeature
+type OscFeature struct{}
+
+func (feature *OscFeature) New() SupportLevelFeature {
+	return &OscFeature{}
+}
+
+func (feature *OscFeature) getId() models.FeatureSupportLevelID {
+	return models.FeatureSupportLevelIDOSC
+}
+
+func (feature *OscFeature) GetName() string {
+	return "OpenShift sandboxed containers"
+}
+
+func (feature *OscFeature) getSupportLevel(filters SupportLevelFilters) models.SupportLevel {
+	if !isFeatureCompatibleWithArchitecture(feature, filters.OpenshiftVersion, swag.StringValue(filters.CPUArchitecture)) {
+		return models.SupportLevelUnavailable
+	}
+
+	if filters.PlatformType != nil && (*filters.PlatformType == models.PlatformTypeVsphere || *filters.PlatformType == models.PlatformTypeNutanix) {
+		return models.SupportLevelUnavailable
+	}
+
+	if isNotSupported, err := common.BaseVersionLessThan("4.10", filters.OpenshiftVersion); isNotSupported || err != nil {
+		return models.SupportLevelUnavailable
+	}
+
+	return models.SupportLevelTechPreview
+}
+
+func (feature *OscFeature) getIncompatibleArchitectures(_ *string) *[]models.ArchitectureSupportLevelID {
+	incompatibleArchitecture := []models.ArchitectureSupportLevelID{
+		models.ArchitectureSupportLevelIDARM64ARCHITECTURE,
+		models.ArchitectureSupportLevelIDS390XARCHITECTURE,
+		models.ArchitectureSupportLevelIDPPC64LEARCHITECTURE,
+	}
+	return &incompatibleArchitecture
+}
+
+func (feature *OscFeature) getIncompatibleFeatures(string) *[]models.FeatureSupportLevelID {
+	return &[]models.FeatureSupportLevelID{
+		models.FeatureSupportLevelIDNUTANIXINTEGRATION,
+		models.FeatureSupportLevelIDVSPHEREINTEGRATION,
+	}
+}
+
+func (feature *OscFeature) getFeatureActiveLevel(cluster *common.Cluster, _ *models.InfraEnv, clusterUpdateParams *models.V2ClusterUpdateParams, _ *models.InfraEnvUpdateParams) featureActiveLevel {
+	if isOperatorActivated("osc", cluster, clusterUpdateParams) {
 		return activeLevelActive
 	}
 	return activeLevelNotActive

@@ -124,6 +124,7 @@ func NewClusterStateMachine(th TransitionHandler) stateswitch.StateMachine {
 		If(IsLvmRequirementsSatisfied),
 		If(IsMceRequirementsSatisfied),
 		If(IsMtvRequirementsSatisfied),
+		If(IsOscRequirementsSatisfied),
 		If(isNetworkTypeValid),
 		If(NetworksSameAddressFamilies),
 		If(IsNodeFeatureDiscoveryRequirementsSatisfied),
@@ -132,6 +133,7 @@ func NewClusterStateMachine(th TransitionHandler) stateswitch.StateMachine {
 		If(IsServiceMeshRequirementsSatisfied),
 		If(IsServerLessRequirementsSatisfied),
 		If(IsOpenShiftAIRequirementsSatisfied),
+		If(IsAuthorinoRequirementsSatisfied),
 	)
 
 	// Refresh cluster status conditions - Non DHCP

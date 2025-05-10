@@ -114,6 +114,7 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 				models.FeatureSupportLevelIDNUTANIXINTEGRATION,
 				models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 				models.FeatureSupportLevelIDODF,
+				models.FeatureSupportLevelIDOPENSHIFTAI,
 				models.FeatureSupportLevelIDVIPAUTOALLOC,
 				models.FeatureSupportLevelIDCLUSTERMANAGEDNETWORKING,
 			}
@@ -122,6 +123,7 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 				models.FeatureSupportLevelIDNUTANIXINTEGRATION,
 				models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 				models.FeatureSupportLevelIDODF,
+				models.FeatureSupportLevelIDOPENSHIFTAI,
 				models.FeatureSupportLevelIDVIPAUTOALLOC,
 				models.FeatureSupportLevelIDCLUSTERMANAGEDNETWORKING,
 			}
@@ -130,11 +132,13 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 				models.FeatureSupportLevelIDNUTANIXINTEGRATION,
 				models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 				models.FeatureSupportLevelIDODF,
+				models.FeatureSupportLevelIDOPENSHIFTAI,
 			}
 			incompatibleFeatures["4.16.0-rc0"] = &[]models.FeatureSupportLevelID{
 				models.FeatureSupportLevelIDNUTANIXINTEGRATION,
 				models.FeatureSupportLevelIDVSPHEREINTEGRATION,
 				models.FeatureSupportLevelIDODF,
+				models.FeatureSupportLevelIDOPENSHIFTAI,
 			}
 
 			testIncompatibleFeatures := []struct {
@@ -267,6 +271,37 @@ var _ = Describe("V2ListFeatureSupportLevels API", func() {
 			Entry("on none", "4.14", common.X86CPUArchitecture, models.PlatformTypeNone, models.SupportLevelSupported),
 			Entry("on baremetal", "4.14", common.X86CPUArchitecture, models.PlatformTypeBaremetal, models.SupportLevelSupported),
 			Entry("on baremetal", "4.13", common.X86CPUArchitecture, models.PlatformTypeBaremetal, models.SupportLevelUnavailable),
+		)
+	})
+
+	Context("Test OSC feature", func() {
+		DescribeTable("Validate OSC on Architecture", func(ocpVersion []string, cpuArch string, expectedResult bool) {
+			for _, v := range ocpVersion {
+				version := v
+				result := IsFeatureAvailable(models.FeatureSupportLevelIDOSC, version, swag.String(cpuArch))
+				Expect(result).Should(Equal(expectedResult),
+					fmt.Sprintf("Feature: %s, OCP version: %s, CpuArch: %s, should be %v", models.FeatureSupportLevelIDOSC, v, cpuArch, expectedResult))
+			}
+		},
+			Entry("on X86	is supported above 4.10", []string{"4.15", "4.16", "4.17", "4.21"}, models.ClusterCPUArchitectureX8664, true),
+			Entry("on arm64 is    NOT supported", []string{"4.8", "4.11", "4.14", "4.21"}, models.ClusterCPUArchitectureArm64, false),
+			Entry("on S390x is    NOT supported", []string{"4.11", "4.13", "4.14", "4.21"}, models.ClusterCPUArchitectureS390x, false),
+			Entry("on ppc64le is	NOT supported", []string{"4.11", "4.13", "4.14", "4.21"}, models.ClusterCPUArchitecturePpc64le, false),
+		)
+
+		DescribeTable("Validate OSC on platform", func(ocpVersion string, cpuArch string, platformType models.PlatformType, expectedResult models.SupportLevel) {
+			featureSupportLevels := GetFeatureSupportList(
+				ocpVersion,
+				swag.String(cpuArch),
+				common.PlatformTypePtr(platformType),
+				nil,
+			)
+			Expect(featureSupportLevels[string(models.FeatureSupportLevelIDOSC)]).To(Equal(expectedResult))
+		},
+			Entry("on Vsphere", "4.10", common.X86CPUArchitecture, models.PlatformTypeVsphere, models.SupportLevelUnavailable),
+			Entry("on Nutanix", "4.10", common.X86CPUArchitecture, models.PlatformTypeNutanix, models.SupportLevelUnavailable),
+			Entry("on none", "4.10", common.X86CPUArchitecture, models.PlatformTypeNone, models.SupportLevelTechPreview),
+			Entry("on baremetal", "4.10", common.X86CPUArchitecture, models.PlatformTypeBaremetal, models.SupportLevelTechPreview),
 		)
 	})
 })

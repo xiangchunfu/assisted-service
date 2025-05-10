@@ -3,6 +3,7 @@ package operators
 import (
 	manifestsapi "github.com/openshift/assisted-service/internal/manifests/api"
 	"github.com/openshift/assisted-service/internal/operators/api"
+	"github.com/openshift/assisted-service/internal/operators/authorino"
 	"github.com/openshift/assisted-service/internal/operators/cnv"
 	"github.com/openshift/assisted-service/internal/operators/lso"
 	"github.com/openshift/assisted-service/internal/operators/lvm"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/assisted-service/internal/operators/nvidiagpu"
 	"github.com/openshift/assisted-service/internal/operators/odf"
 	"github.com/openshift/assisted-service/internal/operators/openshiftai"
+	"github.com/openshift/assisted-service/internal/operators/osc"
 	"github.com/openshift/assisted-service/internal/operators/pipelines"
 	"github.com/openshift/assisted-service/internal/operators/serverless"
 	"github.com/openshift/assisted-service/internal/operators/servicemesh"
@@ -54,6 +56,8 @@ func NewManager(log logrus.FieldLogger, manifestAPI manifestsapi.ManifestsAPI, o
 		servicemesh.NewServiceMeshOperator(log),
 		serverless.NewServerLessOperator(log),
 		openshiftai.NewOpenShiftAIOperator(log),
+		authorino.NewAuthorinoOperator(log),
+		osc.NewOscOperator(log),
 	)
 }
 
